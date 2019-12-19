@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang='en'>
+  <head>
+    <meta charset='UTF-8' />
+    <meta name='viewport' content='width=device-width, initial-scale=1.0' />
+    <meta http-equiv='X-UA-Compatible' content='ie=edge' />
+    <title>Sample Consulting Web</title>
+    <script src='https://knowledgepoint.co.kr/sample/lib/socket.io.js'></script>
+    <script src='../lib/common.js'></script>
+    <script src='js/web.call.target.js'></script>
+  </head>
+  <body>
+    <div class='login'>
+      id : <input id='inputId' value='testuser' /> <br />
+      pw : <input id='inputPw' type='password' value='test01' /> <br />
+      <button id='loginBtn'>로그인</button>
+      <button id='joinBtn' disabled>전화받기</button>
+      <button id='exitBtn'>통화종료</button>
+    </div>
+    <video id='localVideo' autoplay muted></video>
+    <video id='remoteVideo' autoplay></video>
+  </body>
+</html>
+</html>

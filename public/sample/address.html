@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+    <meta charset='UTF-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <meta http-equiv='X-UA-Compatible' content='ie=edge'>
+    <title>Document</title>
+    <link rel='stylesheet' href='css/wrap.css' />
+    <script src='https://knowledgepoint.co.kr/sample/lib/socket.io.js'></script>
+    <script src='../lib/common.js'></script>
+    <script src='js/address.js'></script>
+</head>
+<body>
+    <div class='login'>
+        id : <input id='inputid' value='t'><br />
+        pw : <input id='inputpw' type='password'
+            value='t'></br>
+        target : <input id='inputTarget' value='kp_user01' /><br />
+        <select id='selectIsAll'>
+            <option value='common'>Common</option>
+            <option value='friend' selected>Friend</option>
+        </select>
+        <button id='LoginBtn'>로그인</button>
+        <button id='searchBtn' disabled>검색</button>
+        <button id='addBtn' disabled>친구추가</button>
+        <button id='delBtn' disabled>친구삭제</button>
+        <div id='memberList'></div>
+    </div>
+</body>
+</html>

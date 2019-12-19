@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang='en'>
+  <head>
+    <meta charset='UTF-8' />
+    <meta name='viewport' content='width=device-width, initial-scale=1.0' />
+    <meta http-equiv='X-UA-Compatible' content='ie=edge' />
+    <title>Sample Consulting Web</title>
+    <link rel='stylesheet' href='css/wrap.css' />
+    <script src='https://webrtchacks.github.io/adapter/adapter-latest.js'></script>
+    <script src='https://knowledgepoint.co.kr/sample/lib/socket.io.js'></script>
+    <script src='../lib/common.js'></script>
+    <script src='js/web.doc.share.js'></script>
+  </head>
+  <body>
+    <div class='login'>
+      id : <input id='inputId' value='testconsult' /> <br />
+      pw : <input id='inputPw' type='password' value='test01' /> <br />
+      target : <input id='inputTarget' value='testuser' /> <input type='file' id='docShare' multiple disabled /> <br />
+      <button id='loginBtn'>로그인</button>
+      <button id='callBtn' disabled>전화걸기</button>
+    </div>
+    <video id='localVideo' autoplay muted></video>
+    <video id='remoteVideo' autoplay></video> <br />
+    <ul id='localDocList'></ul>
+    <canvas id='localDoc'></canvas>
+  </body>
+</html>
