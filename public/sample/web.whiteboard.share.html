@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang='en'>
+  <head>
+    <meta charset='UTF-8' />
+    <meta name='viewport' content='width=device-width, initial-scale=1.0' />
+    <meta http-equiv='X-UA-Compatible' content='ie=edge' />
+    <title>Sample Consulting Web</title>
+    <link rel='stylesheet' href='css/wrap.css' />
+    <script src='https://106.240.247.44:7511/socket.io/socket.io.js'></script>
+    <script src='../lib/common.js'></script>
+    <script src='js/web.whiteboard.share.js'></script>
+  </head>
+  <body>
+    <div class='login'>
+      id : <input id='inputId' value='testconsult' /> <br />
+      pw : <input id='inputPw' type='password' value='test01' /> <br />
+      target : <input id='inputTarget' value='testuser' /> <br />
+      <button id='loginBtn'>로그인</button>
+      <button id='callBtn' disabled>전화걸기</button>
+      <button id='whiteboardBtn' disabled>화이트보드</button>
+      <button id='whiteboardClearBtn' disabled>지우기</button>
+    </div>
+    <video id='localVideo' autoplay muted></video>
+    <video id='remoteVideo' autoplay></video>
+    <canvas id='whiteboard' width='400' height='400' style='display: none; border: solid black 1px;'></canvas>
+  </body>
+</html>
