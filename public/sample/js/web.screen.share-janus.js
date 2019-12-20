@@ -5,11 +5,13 @@ document.addEventListener('DOMContentLoaded', function() {
     const loginBtn = document.getElementById('loginBtn');
     const callBtn = document.getElementById('callBtn');
     const shareBtn = document.getElementById('shareBtn');
+    const exitBtn = document.getElementById('exitBtn');
    
     //let signalSocketIo = null;
     let reqNo = 1;
     let roomId;
    
+    let janusLocalStream;
     let janusLocalStreamPeer;
     let janusRemoteStreams = {};
     let janusRemoteStreamPeers = {};
@@ -24,7 +26,8 @@ document.addEventListener('DOMContentLoaded', function() {
    
       switch (data.eventOp) {
         case 'Login':
-          callBtn.disabled = false;
+          if(callBtn.disabled)
+            callBtn.disabled = false;
           break;
    
         case 'Invite':
@@ -93,7 +96,6 @@ document.addEventListener('DOMContentLoaded', function() {
           if (data.useMediaSvr=== 'Y') {
             if (data.usage ==='screen') {
               if (data.candidate) {
-                console.log('candidate evetOp!!!', data);
                 janusScreenShareStreamPeer.addIceCandidate(data.candidate);
               } 
             }
@@ -347,10 +349,10 @@ document.addEventListener('DOMContentLoaded', function() {
     async function createSDPOffer(width, height, framerate, roomId) {
       let multiVideoBox = document.querySelector('#VIDEOONETOMANY');
       try {
-        localStream = await navigator.mediaDevices.getUserMedia({ video: { width: width, height: height, frameRate: { ideal: framerate, max: framerate } }, audio: false });
-   
+        janusLocalStream = await navigator.mediaDevices.getUserMedia(
+          { video : {width:width, height:height, frameRate: { ideal: framerate, max: framerate } }, audio: true}
+        );
         streamSize = Object.keys(janusRemoteStreams).length;
-   
         let videoTagClassName;
    
         if (streamSize > 0 && streamSize <= 3) {
@@ -360,13 +362,12 @@ document.addEventListener('DOMContentLoaded', function() {
         } else if (streamSize > 8) {
           videoTagClassName = 'video-fourbyfour';
         }
-   
         let videoContainner = document.createElement('dd');
         videoContainner.classList = 'multi-video';
         let multiVideo2 = document.createElement('video');
         multiVideo2.autoplay = true;
         multiVideo2.id = 'multiVideo-local';
-        multiVideo2.srcObject = localStream;
+        multiVideo2.srcObject = janusLocalStream;
    
    
         videoContainner.appendChild(multiVideo2);
@@ -375,9 +376,8 @@ document.addEventListener('DOMContentLoaded', function() {
    
    
         janusLocalStreamPeer = new RTCPeerConnection(configuration);
-   
-        localStream.getTracks().forEach(track => {
-          janusLocalStreamPeer.addTrack(track, localStream);
+        janusLocalStream.getTracks().forEach(track => {
+          janusLocalStreamPeer.addTrack(track, janusLocalStream);
         });
    
         try {
@@ -429,7 +429,6 @@ document.addEventListener('DOMContentLoaded', function() {
         janusRemoteStreamPeers[displayId] = new RTCPeerConnection(configuration);
    
         janusRemoteStreamPeers[displayId].ontrack = function (e) {
-   
           janusRemoteStreams[displayId] = e.streams[0];
           streamSize = Object.keys(janusRemoteStreams).length;
           let videoTagClassName;
@@ -440,14 +439,17 @@ document.addEventListener('DOMContentLoaded', function() {
           let videoContainner = document.createElement('dd');
           videoContainner.classList = 'multi-video';
    
-          let multiVideo = document.createElement('video');
-          multiVideo.autoplay = true;
-          multiVideo.srcObject = janusRemoteStreams[displayId];
-          multiVideo.id = 'multiVideo-' + data.displayId;
-   
-          videoContainner.appendChild(multiVideo);
-          multiVideoBox.classList = videoTagClassName;
-          multiVideoBox.appendChild(videoContainner);
+          if(!document.getElementById('multiVideo-' + data.displayId)){
+
+            let multiVideo = document.createElement('video');
+            multiVideo.autoplay = true;
+            multiVideo.srcObject = janusRemoteStreams[displayId];
+            multiVideo.id = 'multiVideo-' + data.displayId;
+     
+            videoContainner.appendChild(multiVideo);
+            multiVideoBox.classList = videoTagClassName;
+            multiVideoBox.appendChild(videoContainner);
+          }
         }
    
    
@@ -507,7 +509,7 @@ document.addEventListener('DOMContentLoaded', function() {
         reqDate: nowDate(),
         reqDeviceType: 'pc',
         serviceType: 'multi',
-        targetId: ['apple', 'melon', 'orange'],
+        targetId: ['apple','orange', 'melon'],
         isSfu: true
       };
    
@@ -568,5 +570,31 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     });
    
+    exitBtn.addEventListener('click', function (e) {
+      loginBtn.disabled = false;
+      callBtn.disabled = true;
+      joinBtn.disabled = true;
+      exitBtn.disabled = true;
+ 
+      let sendData = {
+        eventOp: 'ExitRoom',
+        reqNo: reqNo++,
+        userId: inputId.value,
+        userName : inputId.value,
+        reqDate: nowDate(),
+        roomId: roomId
+      };
+      try {
+        console.log('send', sendData);
+        signalSocketIo.emit('knowledgetalk', sendData);
+        dispose();
+      } catch (err) {
+        if (err instanceof SyntaxError) {
+          alert(' there was a syntaxError it and try again : ' + err.message);
+        } else {
+          throw err;
+        }
+      }
+    });
     
   });
