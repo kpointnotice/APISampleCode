@@ -1,4 +1,4 @@
-const signalServerConnectURL = 'https://106.240.247.44:7511/SignalServer';
+const signalServerConnectURL = 'https://106.240.247.44:7010/SignalServer';
 let reqNo = 1;
  
 (function init() {
