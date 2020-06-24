@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded',function(){
+document.addEventListener('DOMContentLoaded', function () {
     const inputId = document.getElementById('inputid');
     const inputPw = document.getElementById('inputpw');
     const inputTarget = document.getElementById('inputTarget');
@@ -7,13 +7,14 @@ document.addEventListener('DOMContentLoaded',function(){
     const exitBtn = document.getElementById('exitBtn');
     const localVideo = document.getElementById('localVideo');
     const remoteVideo = document.getElementById('remoteVideo');
-    
+
     let reqNo = 1;
     let localStream;
     let peerCon;
-    
-    
-    loginBtn.addEventListener('click',function(e){
+    let configuration = [];
+
+
+    loginBtn.addEventListener('click', function (e) {
         let loginData = {
             eventOp: 'Login',
             reqNo: reqNo++,
@@ -22,46 +23,56 @@ document.addEventListener('DOMContentLoaded',function(){
             reqDate: nowDate(),
             deviceType: 'pc'
         };
-    
+
         try {
-            console.log('send(login)', loginData);
+            tLogBox('send(login)', loginData);
             signalSocketIo.emit('knowledgetalk', loginData);
         } catch (err) {
-            if(err instanceof SyntaxError){
+            if (err instanceof SyntaxError) {
                 alert('there was a syntaxError it and try again : ' + err.message);
             } else {
                 throw err;
             }
         }
     });
-    
-    callBtn.addEventListener('click', function (e){
+
+    callBtn.addEventListener('click', function (e) {
+
         let callData = {
             eventOp: 'Call',
             reqNo: reqNo++,
             reqDate: nowDate(),
             userId: inputId.value,
             targetId: [inputTarget.value],
-            serviceType: 'call',
             reqDeviceType: 'pc'
         };
-    
+
         try {
-            console.log('send(call)', callData);
+            tLogBox('send(call)', callData);
             signalSocketIo.emit('knowledgetalk', callData);
         } catch (err) {
-            if(err instanceof SyntaxError){
+            if (err instanceof SyntaxError) {
                 alert('there was a syntaxError it and try again : ' + err.message);
             } else {
                 throw err;
             }
         }
-    
+
     });
-    
-    exitBtn.addEventListener('click', function(e){
+
+    exitBtn.addEventListener('click', function (e) {
+        localStream.getTracks()[0].stop();
+        localStream.getTracks()[1].stop();
+        localStream = null;
+        peerCon.close();
+        peerCon = null;
+
         localVideo.srcObject = null;
         remoteVideo.srcObject = null;
+
+        callBtn.disabled = false;
+        exitBtn.disabled = true;
+
         let callEndData = {
             eventOp: 'ExitRoom',
             reqNo: reqNo,
@@ -69,9 +80,9 @@ document.addEventListener('DOMContentLoaded',function(){
             reqDate: nowDate(),
             roomId
         };
-    
+
         try {
-            console.log('send', callEndData);
+            tLogBox('send', callEndData);
             signalSocketIo.emit('knowledgetalk', callEndData);
         } catch (err) {
             if (err instanceof SyntaxError) {
@@ -81,10 +92,10 @@ document.addEventListener('DOMContentLoaded',function(){
             }
         }
     });
-    
-    function onIceCandidateHandler(e){
-        if(!e.candidate)    return;
-    
+
+    function onIceCandidateHandler(e) {
+        if (!e.candidate) return;
+
         let iceData = {
             eventOp: 'Candidate',
             reqNo: reqNo++,
@@ -95,9 +106,9 @@ document.addEventListener('DOMContentLoaded',function(){
             usage: 'cam',
             useMediaSvr: 'N'
         };
-    
+
         try {
-            console.log('send(onIceCandidateHandler)', iceData);
+            tLogBox('send(onIceCandidateHandler)', iceData);
             signalSocketIo.emit('knowledgetalk', iceData);
         } catch (err) {
             if (err instanceof SyntaxError) {
@@ -107,55 +118,67 @@ document.addEventListener('DOMContentLoaded',function(){
             }
         }
     }
-    
-    function onAddStreamHandler(e){
+
+    function onAddStreamHandler(e) {
         remoteVideo.srcObject = e.streams[0];
     }
-    
-    signalSocketIo.on('knowledgetalk',function(data){
-        console.log('receive',data);
-    
-        if(!data.eventOp && !data.signalOp){
-            console.log('error', 'eventOp undefined');
+
+    signalSocketIo.on('knowledgetalk', function (data) {
+        tLogBox('receive', data);
+
+        if (!data.eventOp && !data.signalOp) {
+            tLogBox('error', 'eventOp undefined');
         }
-   
+
         if (data.eventOp === 'Login') {
             loginBtn.disabled = true;
             callBtn.disabled = false;
+            tTextbox('로그인 되었습니다');
         }
-    
-        if(data.eventOp === 'Call'){
-            if(data.message !== 'OK'){
+
+        if (data.eventOp === 'Call') {
+            if (data.message !== 'OK') {
+                tTextbox(`상대방(${inputTarget.value})이 로그인 되어 있지 않습니다!`)
                 return;
             }
-    
+
+            configuration.push({
+                urls: data.serverInfo['_j'].turn_url,
+                credential: data.serverInfo['_j'].turn_credential,
+                username: data.serverInfo['_j'].turn_username
+            });
+
             callBtn.disabled = true;
+            exitBtn.disabled = false;
             navigator.mediaDevices
-                .getUserMedia({video:true})
+                .getUserMedia({
+                    video: true,
+                    audio: true
+                })
                 .then(stream => {
                     localStream = stream;
                     localVideo.srcObject = stream;
                 });
         }
-    
-        if(data.eventOp == 'SDP'){
-            if(data.sdp.type = 'offer'){
-   
+
+        if (data.eventOp == 'SDP') {
+            if (data.sdp && data.sdp.type === 'offer') {
+
                 roomId = data.roomId;
-                peerCon = new RTCPeerConnection(configuration); 
-        
+                peerCon = new RTCPeerConnection(configuration);
+
                 peerCon.onicecandidate = onIceCandidateHandler;
-    
-                
+
+
                 peerCon.ontrack = onAddStreamHandler;
-                localStream.getTracks().forEach(function(track){
+                localStream.getTracks().forEach(function (track) {
                     peerCon.addTrack(track, localStream);
                 });
-        
-                peerCon.setRemoteDescription(new RTCSessionDescription(data.sdp));  
-                peerCon.createAnswer().then(sdp => {                                
-                    peerCon.setLocalDescription(new RTCSessionDescription(sdp));    
-        
+
+                peerCon.setRemoteDescription(new RTCSessionDescription(data.sdp));
+                peerCon.createAnswer().then(sdp => {
+                    peerCon.setLocalDescription(new RTCSessionDescription(sdp));
+
                     let ansData = {
                         eventOp: 'SDP',
                         reqNo: reqNo++,
@@ -166,7 +189,7 @@ document.addEventListener('DOMContentLoaded',function(){
                         usage: 'cam',
                         useMediaSvr: 'N'
                     };
-        
+
                     try {
                         console.log('sdp answer data ', ansData);
                         signalSocketIo.emit('knowledgetalk', ansData);
@@ -182,10 +205,10 @@ document.addEventListener('DOMContentLoaded',function(){
                 });
             }
         }
-    
-        if(data.eventOp === 'Candidate'){
-            peerCon.addIceCandidate(new RTCIceCandidate(data.candidate));  
-    
+
+        if (data.eventOp === 'Candidate') {
+            if (data.candidate) peerCon.addIceCandidate(new RTCIceCandidate(data.candidate));
+
             let iceData = {
                 eventOp: 'Candidate',
                 roomId: data.roomId,
@@ -193,9 +216,10 @@ document.addEventListener('DOMContentLoaded',function(){
                 resDate: nowDate(),
                 code: '200'
             };
-    
+
             try {
-                console.log('send(candidate)', iceData);
+                tTextbox('전화 연결이 되었습니다.');
+                tLogBox('send(candidate)', iceData);
                 signalSocketIo.emit('knowledgetalk', iceData);
             } catch (err) {
                 if (err instanceof SyntaxError) {
@@ -205,15 +229,21 @@ document.addEventListener('DOMContentLoaded',function(){
                 }
             }
         }
-    
-        if(data.signalOp === 'Presence'){
-            if(data.action === 'exit'){
-                localVideo.srcObject = null;
-                remoteVideo.srcObject = null;
-            }
+
+        if (data.signalOp === 'Presence' && data.action === 'exit') {
+            localStream.getTracks()[0].stop();
+            localStream.getTracks()[1].stop();
+            localStream = null;
+            peerCon.close();
+            peerCon = null;
+
+            localVideo.srcObject = null;
+            remoteVideo.srcObject = null;
+
+            callBtn.disabled = false;
+            exitBtn.disabled = true;
         }
-    
+
     });
-   
-  })    
-   
+
+})
