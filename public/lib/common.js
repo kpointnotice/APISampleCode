@@ -1,4 +1,4 @@
-const signalServerConnectURL = 'https://106.240.247.44:7010/SignalServer';
+const signalServerConnectURL = 'https://106.240.247.44:7101/SignalServer';
 let reqNo = 1;
  
 (function init() {
@@ -12,7 +12,19 @@ let reqNo = 1;
     }
 })();
 
+function getDate() {
+    let today = new Date();
+    const dd = String(today.getDate()).padStart(2, '0');
+    const mm = String(today.getMonth() + 1).padStart(2, '0'); //January is 0!
+    const yyyy = today.getFullYear();
+    const hh = today.getHours()<10 ? ("0"+today.getHours()) : today.getHours();
+    const min = today.getMinutes()<10 ? ("0"+today.getMinutes()) : today.getMinutes();
+    const ss = today.getSeconds()<10 ? ("0"+today.getSeconds()) : today.getSeconds();
 
+    today = yyyy + mm + dd + hh + min + ss;
+
+    return today;
+}
  
 function nowDate() {
     var today = new Date();
@@ -26,16 +38,14 @@ function nowDate() {
     if (dd < 10) {
         dd = '0' + dd;
     }
- 
     return '' + yyyy + mm + dd;
 }
-
+ 
 function nowTime() {
   let today = new Date();
   var hour = today.getHours(); //시
   var minutes = today.getMinutes(); //분
   var seconds = today.getSeconds(); //초
-
   return '' + hour +'시'+ minutes +'분'+ seconds +'초';
 }
  
@@ -153,9 +163,7 @@ function passwordSHA256(s) {
                 utftext += String.fromCharCode(((c >> 6) & 63) | 128);
                 utftext += String.fromCharCode((c & 63) | 128);
             }
- 
         }
- 
         return utftext;
     }
  
@@ -172,50 +180,57 @@ function passwordSHA256(s) {
     s = Utf8Encode(s);
     return binb2hex(core_sha256(str2binb(s), s.length * chrsz));
 }
-
-
+ 
+ 
 function tLogBox(type, text) {
   let logText = JSON.stringify(text);
   let logJson = JSON.parse(logText);
-  if (logJson.eventOp === "SDP") {
+  if (logJson.eventOp === 'SDP') {
     if (logJson.sdp && logJson.sdp.sdp) {
-      logJson.sdp.sdp = "sdp...";
+      logJson.sdp.sdp = 'sdp...';
     }
   }
-
-  if (logJson.eventOp === "Candidate") {
+ 
+  if (logJson.eventOp === 'Candidate') {
     if (logJson.candidate) {
-      logJson.candidate = "candidate...";
+      logJson.candidate = 'candidate...';
     }
   }
-
-  if (
-    logJson.eventOp === "FileShareStart" ||
-    logJson.eventOp === "FileShareStartSvr"
-  ) {
+ 
+  if (logJson.eventOp === 'FileShareStart' || logJson.eventOp === 'FileShareStartSvr') {
     if (logJson.fileInfoList && logJson.fileInfoList.url) {
-      logJson.fileInfoList.url = "file url...";
+      logJson.fileInfoList.url = 'file url...';
     }
   }
-
-  if (logJson.eventOp === "FileShare" || logJson.eventOp === "FileShareSvr") {
+ 
+  if (logJson.eventOp === 'FileShare' || logJson.eventOp === 'FileShareSvr') {
     if (logJson.fileUrl) {
-      logJson.fileUrl = "file url...";
+      logJson.fileUrl = 'file url...';
     }
   }
-
-  if (logJson.eventOp === "ScreenShare") {
+ 
+  if (logJson.eventOp === 'ScreenShare') {
     if (logJson.sdp && logJson.sdp.sdp) {
-      logJson.sdp.sdp = "sdp...";
+      logJson.sdp.sdp = 'sdp...';
     }
   }
-
+ 
   logText = JSON.stringify(logJson);
   logText = `[${nowTime()}] [${type}] message: ${logText}`;
   console.log('logText',logText)
   let _t = document.createTextNode(logText);
   let printBox = document.getElementById('printBox');
-  printBox.appendChild(document.createElement("p").appendChild(_t));
-  printBox.appendChild(document.createElement("br"));
-  printBox.appendChild(document.createElement("br"));
+  printBox.appendChild(document.createElement('p').appendChild(_t));
+  printBox.appendChild(document.createElement('br'));
+  printBox.appendChild(document.createElement('br'));
+}
+
+function tTextbox(text) {
+  let printBox = document.getElementById('text_print_Box');
+  printBox.innerText = text;
+}
+
+function chatTextBox(text){
+  let printBox = document.getElementById('chat_Box');
+  printBox.innerText = text + '\n' + printBox.innerText;
 }
