@@ -217,7 +217,6 @@ function tLogBox(type, text) {
  
   logText = JSON.stringify(logJson);
   logText = `[${nowTime()}] [${type}] message: ${logText}`;
-  console.log('logText',logText)
   let _t = document.createTextNode(logText);
   let printBox = document.getElementById('printBox');
   printBox.appendChild(document.createElement('p').appendChild(_t));
