@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const exitBtn = document.getElementById('exitBtn');
     let sessionBtn = document.getElementById('sessionBtn')
    
-   
+    let localStream;
     let reqNo = 1;
    
     let kurentoPeer;
@@ -27,9 +27,17 @@ document.addEventListener('DOMContentLoaded', function() {
    
       if (data.eventOp === 'Invite') {
         roomId = data.roomId;
-   
+
+        // sessionBtn.disabled = false;
         callBtn.disabled = true;
         joinBtn.disabled = false;
+      }
+
+      //자료 공유 활성화
+      if (data.eventOp === 'Join' && data.code === '200'){
+        sessionBtn.disabled = false
+      } else if(data.signalOp === 'Presence'){
+        sessionBtn.disabled = false
       }
    
       if (data.eventOp === 'Call') {
@@ -75,7 +83,6 @@ document.addEventListener('DOMContentLoaded', function() {
           }
         }
       }
-   
     });
    
    
@@ -99,9 +106,6 @@ document.addEventListener('DOMContentLoaded', function() {
           throw err;
         }
       }
-   
-      
-   
     });
    
     callBtn.addEventListener('click', function(e) {
@@ -112,7 +116,7 @@ document.addEventListener('DOMContentLoaded', function() {
         reqDate: nowDate(),
         reqDeviceType: 'pc',
         serviceType: 'multi',
-        targetId: ['p2', 'p3', 'p4']
+        targetId: ['melon', 'apple']
       };
    
       try {
@@ -154,7 +158,29 @@ document.addEventListener('DOMContentLoaded', function() {
       callBtn.disabled = true;
       joinBtn.disabled = true;
       exitBtn.disabled = true;
-      dispose();
+      
+      let callEndData = {
+          eventOp: 'ExitRoom',
+          reqNo: reqNo,
+          userId: inputId.value,
+          reqDate: nowDate(),
+          roomId
+      };
+
+      try {
+        console.log(callEndData);
+        tLogBox('send');
+        signalSocketIo.emit('knowledgetalk', callEndData);
+        console.log(callEndData);
+      } catch (err) {
+        if (err instanceof SyntaxError) {
+            alert('there was a syntaxError it and try again:' + err.message);
+        } else {
+            throw err;
+        }
+      }
+
+      signalSocketIo.emit('exitroom', callData);
     });
    
    

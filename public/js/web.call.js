@@ -140,6 +140,8 @@ document.addEventListener('DOMContentLoaded', function () {
             if (data.message !== 'OK') {
                 tTextbox(`상대방(${inputTarget.value})이 로그인 되어 있지 않습니다!`)
                 return;
+            } else if (data.message === 'OK') {
+                tTextbox(`상대방 ${inputTarget.value} 에게 통화 연결 중`)
             }
 
             configuration.push({
@@ -166,9 +168,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 roomId = data.roomId;
                 peerCon = new RTCPeerConnection(configuration);
-
                 peerCon.onicecandidate = onIceCandidateHandler;
-
 
                 peerCon.ontrack = onAddStreamHandler;
                 localStream.getTracks().forEach(function (track) {
@@ -228,6 +228,10 @@ document.addEventListener('DOMContentLoaded', function () {
                     throw err;
                 }
             }
+        }
+
+        if(data.eventOp === 'ExitRoom'){
+            tTextbox(`${inputTarget.value} 통화를 종료 하였습니다.`);
         }
 
         if (data.signalOp === 'Presence' && data.action === 'exit') {

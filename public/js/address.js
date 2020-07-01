@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', function () {
   let reqNo = 1;
 
   signalSocketIo.on('knowledgetalk', function (data) {
-
+    
     tLogBox('receive', data);
     if (!data.eventOp && !data.signalOp) {
       tLogBox('error', 'eventOp undefind');
@@ -25,6 +25,14 @@ document.addEventListener('DOMContentLoaded', function () {
         memberList();
       }
     }
+
+    if(data.code === '200'){
+      tTextbox('로그인 되었습니다.')
+    } else if(data.code !== '200'){
+      tTextbox('아이디 비밀번호를 다시 확인해주세요')
+    }
+
+
     if (data.eventOp === 'Contact') {
       memberList();
     }
@@ -37,15 +45,27 @@ document.addEventListener('DOMContentLoaded', function () {
           friends += data.result.friend[i].id 
                     + (i < data.result.friend.length - 1 ? ', ' : '');
         }  
-
         tTextbox(friends);
       } 
 
-      if (data.type === "common") {
-        let search = '검색 결과 : ' + data.result.common[0].id;
+      // if(data.eventOp === 'MemberList' && data.code === '200'){
+      //   console.log('확인')
+        if (data.type === "common" && data.code ==='200') {
+          let test = data.result.common
+          
+          let searchId = '';
+          for(var i=0; i<test.length; i++){
+            searchId += data.result.common[i].id
+            searchId += i< test.length-1 ? ',' : ''
+          }
 
-        tTextbox(search);
-      }
+          let search = '검색 결과 : ' + searchId;
+          tTextbox(search);
+        } else if (data.type === "common" && data.code ==='403') {
+          tTextbox('해당 친구 이름은 없습니다.');
+        }
+      // }
+      // tTextbox('아이디가 없습니다');
     }
   });
 
@@ -77,11 +97,11 @@ document.addEventListener('DOMContentLoaded', function () {
       limit,
       offset
     };
-
+    //20171011133100123
     let memberList = {
       eventOp: 'MemberList',
       reqNo: reqNo++,
-      reqDate: 20171011133100123,
+      reqDate: new Date(),
       type: 'friend',
       option: objOp
     };
@@ -102,7 +122,7 @@ document.addEventListener('DOMContentLoaded', function () {
     let member = {
       eventOp: 'MemberList',
       reqNo: reqNo++,
-      reqDate: 20171011133100123,
+      reqDate: new Date(),
       type: 'common',
       search: inputTarget.value,
       option: {
@@ -128,7 +148,7 @@ document.addEventListener('DOMContentLoaded', function () {
     let addFriend = {
       eventOp: 'Contact',
       reqNo: reqNo++,
-      reqDate: 20171011133100123,
+      reqDate: new Date(),
       type: 'add',
       target: inputTarget.value
     };
@@ -149,7 +169,7 @@ document.addEventListener('DOMContentLoaded', function () {
     let addFriend = {
       eventOp: 'Contact',
       reqNo: reqNo++,
-      reqDate: 20171011133100123,
+      reqDate: new Date(),
       type: 'delete',
       target: inputTarget.value
     };

@@ -2,7 +2,9 @@ const inputId = document.getElementById('inputId');
 const inputPw = document.getElementById('inputPw');
 const loginBtn = document.getElementById('loginBtn');
  
+
 loginBtn.addEventListener('click', function (e) {
+    
     let loginData = {
         eventOp: 'Login',
         reqNo: reqNumber(),
@@ -13,7 +15,9 @@ loginBtn.addEventListener('click', function (e) {
     };
  
     try {
+        console.log('확인용',)
         console.log('send', loginData);
+        tLogBox('send',loginData)
         signalSocketIo.emit('knowledgetalk', loginData);
     } catch (err) {
         if (err instanceof SyntaxError) {
@@ -26,8 +30,21 @@ loginBtn.addEventListener('click', function (e) {
  
  
 signalSocketIo.on('knowledgetalk', function (data) {
-    console.log('receive', data);
-    if (!data.eventOp && !data.signalOp) {
-        console.log('error', 'eventOp undefined');
+    //tLogBox 로그 출력 
+    tLogBox('receive', data);
+    if (!data.eventOp && !data.signalOp) { 
+    console.log('error', 'eventOp undefined');
+    }
+
+    if(data.code === '200'){
+        //tTextbox 텍스트 출력
+        tTextbox('로그인 되었습니다.')
+        loginBtn.disabled = true
+    } else if(data.code === '111'){
+        tTextbox('현재 로그인 되어 있습니다.')
+        loginBtn.disabled = true
+    } else if(data.code !== 200) {
+        tTextbox('아이디, 비밀번호가 맞지 않습니다')
+        loginBtn.disabled = false
     }
 });

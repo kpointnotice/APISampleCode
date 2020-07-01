@@ -226,6 +226,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             }
         }
+        if (data.signalOp === 'Presence'){
+            tTextbox(`${data.userId} 통화를 종료 하였습니다.`);
+        }
 
         if (data.signalOp == 'Presence' && data.action == 'end') {
             localStream.getTracks()[0].stop();
@@ -238,7 +241,7 @@ document.addEventListener('DOMContentLoaded', function () {
             localVideo.srcObject = null;
             remoteVideo.srcObject = null;
 
-            joinBtn.disabled = false;
+            joinBtn.disabled = true;
             exitBtn.disabled = true;
         }
 
