@@ -22,12 +22,22 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('error', 'eventOp undefined');
       }
    
-      if (data.eventOp === 'Login') {
+      if (data.eventOp === 'Login' && data.code ==='200' ) {
         loginBtn.disabled = true;
         callBtn.disabled = false;
+        tTextbox('로그인 되었습니다.')
+      } else if(data.eventOp === 'Login' && data.code !=='200') {
+        tTextbox('아이디 비번을 다시 확인해주세요')
       }
-   
-      if (data.eventOp === 'Call') {
+
+      if (data.eventOp === 'Invite'){
+        tTextbox(data.userId + '님이 통화를 요청하였습니다.')
+      }
+      
+      if (data.eventOp === 'Call' && data.code !== '200'){
+        tTextbox('상대방이 로그인 되어 있지 않습니다.')
+      } else if (data.eventOp === 'Call') {
+        tTextbox('전화 연결중입니다...')
         callBtn.disabled = true;
         whiteboardBtn.disabled = false;
         whiteboardClearBtn.disabled = false;
@@ -38,7 +48,11 @@ document.addEventListener('DOMContentLoaded', function() {
             localVideo.srcObject = stream;
           });
       }
-   
+      
+      if(data.signalOp === 'Presence' && data.action === 'join'){
+        tTextbox('통화 연결이 되었습니다.')
+      }
+
       if (data.eventOp === 'SDP') {
         if (data.sdp.type === 'offer') {
           roomId = data.roomId;
@@ -179,13 +193,16 @@ document.addEventListener('DOMContentLoaded', function() {
     });
    
     whiteboardBtn.addEventListener('click', function(e) {
+      tTextbox('화이트 보드가 활성화 되었습니다.')
       if (whiteboard.style.display === 'none') {
         whiteboard.style.display = 'inline-block';
         setPen();
       } else {
         context.clearRect(0, 0, whiteboard.width, whiteboard.height);
         whiteboard.style.display = 'none';
-   
+        
+        console.log('확인 roomID', roomId)
+        console.log('확인222 roomID', this.roomId)
         let wbeData = {
           eventOp: 'WhiteBoardEnd',
           reqNo: reqNo++,
@@ -208,6 +225,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
    
     whiteboardClearBtn.addEventListener('click', function(e) {
+      tTextbox('화이트 보드 내용을 지웠습니다.')
       context.clearRect(0, 0, whiteboard.width, whiteboard.height);
    
       let clearData = {
@@ -264,6 +282,61 @@ document.addEventListener('DOMContentLoaded', function() {
         context.closePath();
       });
     }
+
+    blackPen.addEventListener('click', e => {
+      tTextbox('검정색을 선택하셨습니다.')
+      blackPen.disabled = true;
+      redPen.disabled = false;
+      bluePen.disabled = false;
+  
+      context.strokeStyle = 'black';
+  
+      let colorData = {
+        signalOp:	"Color",
+        reqNo:	"1234567",
+        color:	"#000000"
+      }
+  
+      signalSocketIo.emit('knowledgetalk', colorData);
+      tLogBox('knowledgetalk', colorData);
+  
+    })
+  
+    redPen.addEventListener('click', e => {
+      tTextbox('빨간색을 선택하셨습니다.')
+      blackPen.disabled = false;
+      redPen.disabled = true;
+      bluePen.disabled = false;
+      context.strokeStyle = 'red';
+  
+      let colorData = {
+        signalOp:	"Color",
+        reqNo:	"1234567",
+        color:	"#ff0000"
+      }
+  
+      signalSocketIo.emit('knowledgetalk', colorData);
+      tLogBox('knowledgetalk', colorData);
+    })
+  
+    bluePen.addEventListener('click', e => {
+      tTextbox('파란색을 선택하셨습니다.')
+      blackPen.disabled = false;
+      redPen.disabled = false;
+      bluePen.disabled = true
+      context.strokeStyle = 'blue';
+  
+      let colorData = {
+        signalOp:	"Color",
+        reqNo:	"1234567",
+        color:	"#0000ff"
+      }
+  
+      signalSocketIo.emit('knowledgetalk', colorData);
+      tLogBox('knowledgetalk', colorData);
+  
+    })
+
    
     function setPen() {
       context.globalCompositeOperation = 'source-over';

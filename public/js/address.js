@@ -23,15 +23,10 @@ document.addEventListener('DOMContentLoaded', function () {
         addBtn.disabled = false;
         delBtn.disabled = false;
         memberList();
+      }else if(data.code !== '200'){
+        tTextbox('아이디 비밀번호를 다시 확인해주세요')
       }
     }
-
-    if(data.code === '200'){
-      tTextbox('로그인 되었습니다.')
-    } else if(data.code !== '200'){
-      tTextbox('아이디 비밀번호를 다시 확인해주세요')
-    }
-
 
     if (data.eventOp === 'Contact') {
       memberList();
@@ -42,7 +37,7 @@ document.addEventListener('DOMContentLoaded', function () {
         let friends = '친구 목록 : ';
 
         for (let i = 0; i < data.result.friend.length; i++) {
-          friends += data.result.friend[i].id 
+          friends += data.result.friend[i].id
                     + (i < data.result.friend.length - 1 ? ', ' : '');
         }  
         tTextbox(friends);

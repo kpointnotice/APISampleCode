@@ -4,7 +4,6 @@ const loginBtn = document.getElementById('loginBtn');
  
 
 loginBtn.addEventListener('click', function (e) {
-    
     let loginData = {
         eventOp: 'Login',
         reqNo: reqNumber(),
@@ -15,8 +14,7 @@ loginBtn.addEventListener('click', function (e) {
     };
  
     try {
-        console.log('확인용',)
-        console.log('send', loginData);
+
         tLogBox('send',loginData)
         signalSocketIo.emit('knowledgetalk', loginData);
     } catch (err) {
@@ -27,7 +25,6 @@ loginBtn.addEventListener('click', function (e) {
         }
     }
 });
- 
  
 signalSocketIo.on('knowledgetalk', function (data) {
     //tLogBox 로그 출력 

@@ -23,15 +23,23 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('error', 'eventOp undefined');
       }
    
-      if (data.eventOp === 'Login') {
+      if (data.eventOp === 'Login' && data.code ==='200') {
         loginBtn.disabled = true;
+        tTextbox('로그인 되었습니다.')
+      } else if(data.eventOp === 'Login' && data.code !=='200') {
+        tTextbox('아이디 비번을 다시 확인해주세요')
       }
    
       if (data.eventOp === 'Invite') {
+        tTextbox(data.userId + '님이 통화를 요청하였습니다.')
         roomId = data.roomId;
         joinBtn.disabled = false;
       }
-   
+      
+      if (data.eventOp === 'Join' && data.code === '200'){
+        tTextbox('통화 연결이 되었습니다.')
+      }  
+
       if (data.eventOp === 'Join') {
         joinBtn.disabled = true;
         navigator.mediaDevices
@@ -112,6 +120,7 @@ document.addEventListener('DOMContentLoaded', function() {
       }
    
       if (data.signalOp === 'Draw') {
+        tTextbox('상대방이 화이트 보드 활성화 하였습니다.')
         setPen();
         whiteboard.style.display = 'inline-block';
    
@@ -144,6 +153,7 @@ document.addEventListener('DOMContentLoaded', function() {
       }
    
       if (data.signalOp === 'Reset') {
+        tTextbox('화이트 보드 내용을 지웠습니다.')
         context.clearRect(0, 0, whiteboard.width, whiteboard.height);
       }
     });

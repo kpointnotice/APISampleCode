@@ -15,19 +15,23 @@ document.addEventListener('DOMContentLoaded', function() {
     signalSocketIo.on('knowledgetalk', function(data) {
    
       console.log('receive', data);
-   
+      tLogBox('receive', data);
+      
       if (!data.eventOp && !data.signalOp) {
         console.log('error', 'eventOp undefined');
+        tLogBox('error', 'eventOp undefined');
       }
    
-      if (data.eventOp === 'Login') {
+      if (data.eventOp === 'Login' && data.code === '200') {
+        tTextbox('로그인 되었습니다.');
         loginBtn.disabled = true;
         callBtn.disabled = false;
       }
-   
+      
+      //초대할때 RoomId가 시그널서버에서 브로드캐슬로 데이터를 보내준다.
       if (data.eventOp === 'Invite') {
         roomId = data.roomId;
-
+        tTextbox(data.userId+'님이 회의 초대 요청이 들어 왔습니다.')
         // sessionBtn.disabled = false;
         callBtn.disabled = true;
         joinBtn.disabled = false;
@@ -35,16 +39,20 @@ document.addEventListener('DOMContentLoaded', function() {
 
       //자료 공유 활성화
       if (data.eventOp === 'Join' && data.code === '200'){
+        tTextbox('회의를 시작하셔도 됩니다.')
         sessionBtn.disabled = false
       } else if(data.signalOp === 'Presence'){
+        tTextbox('회의를 시작하셔도 됩니다.')
         sessionBtn.disabled = false
       }
    
-      if (data.eventOp === 'Call') {
+      if (data.eventOp === 'Call' && data.code === '200') {
         roomId = data.roomId;
-   
         exitBtn.disabled = false;
+      } else if (data.eventOp === 'Call' && data.code !== '200'){
+        tTextbox('상대방이 로그인 되어 있지 않습니다.')
       }
+      
    
       if (data.eventOp === 'Join') {
         roomId = data.roomId;
@@ -56,6 +64,28 @@ document.addEventListener('DOMContentLoaded', function() {
       if (data.eventOp === 'SDP') {
         if (data.sdp && data.sdp.type === 'answer' && kurentoPeer) {
         }
+      }
+      
+      //공유 자원 예약 이벤트
+      if(data.eventOp === 'SessionReserve' && data.message === 'OK'){
+        tTextbox('공유자원이 예약 되었습니다')
+      } 
+      if(data.eventOp === 'SessionReserve' && data.message === 'Resources already in use'){
+        tTextbox('다른분이 먼저 공유자원을 예약 하셨습니다. 기다려주세요')
+      }
+
+      //회의 종료시 response
+      if(data.eventOp === 'ExitRoom' && data.message === 'OK'){
+        tTextbox('회의를 종료 종료합니다.')
+        sessionBtn.disabled = true
+      } 
+      console.log('data',data)
+      if(data.signalOp === 'Presence' && data.action === 'exit'){
+        tTextbox('회의가 종료 종료합니다.')
+        sessionBtn.disabled = true
+        exitBtn.disabled = true
+        callBtn.disabled = true
+        loginBtn.disabled = false
       }
    
       if (data.eventOp === 'Candidate') {
@@ -73,6 +103,7 @@ document.addEventListener('DOMContentLoaded', function() {
         };
    
         try {
+          tLogBox('send', iceData);
           console.log('send', iceData);
           signalSocketIo.emit('knowledgetalk', iceData);
         } catch (err) {
@@ -97,6 +128,7 @@ document.addEventListener('DOMContentLoaded', function() {
       };
    
       try {
+        // printBox
         console.log('send', loginData);
         signalSocketIo.emit('knowledgetalk', loginData);
       } catch (err) {
@@ -118,8 +150,9 @@ document.addEventListener('DOMContentLoaded', function() {
         serviceType: 'multi',
         targetId: ['melon', 'apple']
       };
-   
+      //회의 초대 대상 ['melon', 'apple']
       try {
+        tTextbox('회의에 초대 중입니다...')
         console.log('send', callData);
         signalSocketIo.emit('knowledgetalk', callData);
       } catch (err) {
@@ -142,6 +175,7 @@ document.addEventListener('DOMContentLoaded', function() {
       };
    
       try {
+        // printBox
         console.log('send', joinData);
         signalSocketIo.emit('knowledgetalk', joinData);
       } catch (err) {
@@ -168,10 +202,13 @@ document.addEventListener('DOMContentLoaded', function() {
       };
 
       try {
-        console.log(callEndData);
-        tLogBox('send');
+        // printBox
+        // console.log(callEndData);
+        // tLogBox('send');
+        console.log('send',callEndData);
         signalSocketIo.emit('knowledgetalk', callEndData);
-        console.log(callEndData);
+        // printBox
+        // console.log('send',callEndData);
       } catch (err) {
         if (err instanceof SyntaxError) {
             alert('there was a syntaxError it and try again:' + err.message);
@@ -180,7 +217,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
       }
 
-      signalSocketIo.emit('exitroom', callData);
+      // signalSocketIo.emit('exitroom', callData);
     });
    
    

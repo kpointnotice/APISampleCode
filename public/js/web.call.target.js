@@ -57,6 +57,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
+    //
     exitBtn.addEventListener('click', function (e) {
         localStream.getTracks()[0].stop();
         localStream.getTracks()[1].stop();
@@ -135,7 +136,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         if (data.eventOp === 'Invite') {
-            tTextbox(`${data.userId} 에게 전화가 왔습니다.`)
+            tTextbox(`${data.userId}님에게 전화가 왔습니다.`)
             roomId = data.roomId;
             joinBtn.disabled = false;
 
@@ -226,10 +227,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             }
         }
-        if (data.signalOp === 'Presence'){
-            tTextbox(`${data.userId} 통화를 종료 하였습니다.`);
-        }
-
+        
+        //
         if (data.signalOp == 'Presence' && data.action == 'end') {
             localStream.getTracks()[0].stop();
             localStream.getTracks()[1].stop();
@@ -240,9 +239,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
             localVideo.srcObject = null;
             remoteVideo.srcObject = null;
-
+            
             joinBtn.disabled = true;
             exitBtn.disabled = true;
+
+            tTextbox(`${data.userId}님이 통화를 종료 하였습니다.`);
         }
 
     })
