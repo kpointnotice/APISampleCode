@@ -12,7 +12,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let localStream;
     let roomId;
     let configuration;
-   
+    let penColor;
     let isDrawing = false;
     let context = whiteboard.getContext('2d');
    
@@ -121,7 +121,7 @@ document.addEventListener('DOMContentLoaded', function() {
    
       if (data.signalOp === 'Draw') {
         tTextbox('상대방이 화이트 보드 활성화 하였습니다.')
-        setPen();
+        setPen(penColor);
         whiteboard.style.display = 'inline-block';
    
         let canvasX;
@@ -156,6 +156,10 @@ document.addEventListener('DOMContentLoaded', function() {
         tTextbox('화이트 보드 내용을 지웠습니다.')
         context.clearRect(0, 0, whiteboard.width, whiteboard.height);
       }
+
+      if (data.signalOp === 'Color'){
+        penColor = data.color
+      }
     });
    
     function onIceCandidateHandler(e) {
@@ -187,12 +191,12 @@ document.addEventListener('DOMContentLoaded', function() {
       remoteVideo.srcObject = e.stream;
     }
    
-    function setPen() {
+    function setPen(color, width) {
       context.globalCompositeOperation = 'source-over';
       context.lineJoin = 'round';
       context.lineCap = 'round';
-      context.strokeStyle = 'black';
-      context.lineWidth = '5';
+      context.strokeStyle = color;
+      context.lineWidth = width || '5';
     }
    
     loginBtn.addEventListener('click', function(e) {
