@@ -75,7 +75,7 @@ document.addEventListener('DOMContentLoaded', function() {
    
           imgEl.name = fileObj.name;
           imgEl.src = reader.result;
-          imgEl.style.width = '200px';
+          imgEl.style.width = '400px';
    
           imgEl.addEventListener('click', function(e) {
             let fileName = e.target.name;
@@ -155,22 +155,34 @@ document.addEventListener('DOMContentLoaded', function() {
       if (!data.eventOp && !data.signalOp) {
         console.log('error', 'eventOp undefined');
       }
-   
-      if (data.eventOp === 'Login') {
-        loginBtn.disabled = true;
-        callBtn.disabled = false;
+      
+      if(data.eventOp === 'Login' && data.code === '200'){
+        if (data.eventOp === 'Login') {
+          tTextbox('로그인 되었습니다.')
+          loginBtn.disabled = true;
+          callBtn.disabled = false;
+          docShare.disabled = true;
+        }
+      } 
+      if(data.eventOp === 'Login' && data.code !== '200'){
+        tTextbox('아이디 비밀번호를 확인해주세요.')
       }
-   
-      if (data.eventOp === 'Call') {
-        callBtn.disabled = true;
-        docShare.disabled = false;
-        navigator.mediaDevices
-          .getUserMedia({ video: true, audio: false })
-          .then(stream => {
-            localStream = stream;
-            localVideo.srcObject = stream;
-          });
-      }
+      if(data.eventOp === 'Call' && data.code === '200'){
+        if(data.eventOp === 'Call'){
+          tTextbox('통화 연결중입니다...')
+          callBtn.disabled = true;
+          docShare.disabled = true;
+          navigator.mediaDevices
+            .getUserMedia({ video: true, audio: false })
+            .then(stream => {
+              localStream = stream;
+              localVideo.srcObject = stream;
+            });
+        } 
+      } 
+      if(data.eventOp === 'Call' && data.code !== '200'){
+        tTextbox('상대방이 로그인 되어 있지 않습니다.')
+      } 
    
       if (data.eventOp === 'SDP') {
         if (data.sdp.type === 'offer') {
@@ -211,6 +223,18 @@ document.addEventListener('DOMContentLoaded', function() {
             }
           });
         }
+      }
+
+      if(data.eventOp === 'FileShareStart' && data.code === '200'){
+        tTextbox('문서 공유 되었습니다.')
+      }
+      if(data.eventOp === 'FileShareStart' && data.code !== '200'){
+        tTextbox('예상치 못한 오류가 발생하였습니다.')
+      }
+
+      if(data.signalOp === 'Presence' && data.action === 'join'){
+        tTextbox('통화가 연결 되었습니다.')
+        docShare.disabled = false;
       }
    
       if (data.eventOp === 'Candidate') {

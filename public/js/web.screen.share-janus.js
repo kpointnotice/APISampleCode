@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', function() {
     //let signalSocketIo = null;
     let reqNo = 1;
     let roomId;
-   
+    // let sdp;
     let janusLocalStream;
     let janusLocalStreamPeer;
     let janusRemoteStreams = {};
@@ -19,15 +19,16 @@ document.addEventListener('DOMContentLoaded', function() {
     let janusScreenShareStream;
     let configuration;
      
-   
-   
     signalSocketIo.on('knowledgetalk', function (data) {
       tLogBox('receive', data);
+      console.log('receive', data);
    
       switch (data.eventOp) {
         case 'Login':
           if(callBtn.disabled)
+            loginBtn.disabled = true;
             callBtn.disabled = false;
+            tTextbox('로그인 되었습니다.')
           break;
    
         case 'Invite':
@@ -58,10 +59,13 @@ document.addEventListener('DOMContentLoaded', function() {
           roomId = data.roomId;
           exitBtn.disabled = false;
           if (data.code !== '200') {
+            console.log('111??')
             tLogBox('join err : ', data);
           } else {
+            console.log('2222??')
             tLogBox('join data ################  ', data);
             if (data.useMediaSvr === 'Y') {
+              //비디오 사이즈 
               createSDPOffer(data.videoHeight, data.videoWidth, data.videoFramerate, roomId);
             }
           }
@@ -89,7 +93,6 @@ document.addEventListener('DOMContentLoaded', function() {
               }
             }
           }
-      
           break;
    
         case 'Candidate' :
@@ -154,6 +157,7 @@ document.addEventListener('DOMContentLoaded', function() {
    
         janusScreenShareStreamPeer.ontrack = (e) => {
           tLogBox('check',e);
+          console.log('check',e)
           setScreenVideo(e.streams[0]);
         };
    
@@ -176,30 +180,45 @@ document.addEventListener('DOMContentLoaded', function() {
           signalSocketIo.emit('knowledgetalk', sendData);
         }
    
-   
+        
         await janusScreenShareStreamPeer.setRemoteDescription(new RTCSessionDescription(data.sdp));
         await janusScreenShareStreamPeer.createAnswer().then(sdp => {
           janusScreenShareStreamPeer.setLocalDescription(sdp);
-   
-          let sendData = {
-            eventOp: 'SDP',
-            reqNo: data.reqNo,
-            userId: data.userId,
-            type: 'user',
-            roomId: data.roomId,
-            reqDate: data.reqDate,
-            isHWAccelation: false,
-            isRTPShare: false,
-            useMediaSvr: 'Y',
-            usage: 'screen',
-            sdp: sdp,
-            isSfu: true
-          };
-    
-          tLogBox('send', sendData);
-          signalSocketIo.emit('knowledgetalk', sendData);
-   
+
         })
+        //추가부분
+        let sdp = await janusScreenShareStreamPeer.createOffer();
+        await janusScreenShareStreamPeer.setLocalDescription(sdp);
+
+        janusScreenShareStreamPeer.onicegatheringstatechange = async (ev) => {
+          let connection = ev.target;
+            switch (connection.iceGatheringState) {
+              case 'gathering':
+                break;
+              case 'complete':
+                let sendData = {
+                  eventOp: 'SDP',
+                  reqNo: data.reqNo,
+                  userId: data.userId,
+                  type: 'user',
+                  roomId: data.roomId,
+                  reqDate: data.reqDate,
+                  isHWAccelation: false,
+                  isRTPShare: false,
+                  useMediaSvr: 'Y',
+                  usage: 'screen',
+                  sdp: sdp,
+                  isSfu: true
+                };
+    
+                tLogBox('send', sendData);
+                signalSocketIo.emit('knowledgetalk', sendData);
+                break;
+            }
+          }
+        } catch (error) {
+         tLogBox(' janusScreenShareStreamPeer [error]    ', error);
+        };
    
    
         janusScreenShareStreamPeer.oniceconnectionstatechange = (e) => {
@@ -215,10 +234,11 @@ document.addEventListener('DOMContentLoaded', function() {
           }
         }
    
-      } catch (error) {
-        tLogBox('error' , error);
+    //   } catch (error) {
+    //     tLogBox('error' , error);
       }
-    };
+      
+    // };
    
     const createScreenShereSdpOffer = async () => {
       try {
@@ -316,7 +336,8 @@ document.addEventListener('DOMContentLoaded', function() {
    
       if (isVideo) {
         let video = document.createElement('video');
-   
+        console.log('@@@@@@@@@@@@', stream)
+        console.log('video',video)
         video.id = 'screenshare-video';
         video.style.width ='750px';
         video.style.height='450px';
@@ -326,7 +347,6 @@ document.addEventListener('DOMContentLoaded', function() {
           video.srcObject = stream;
         }
         isVideo.appendChild(video);
-        
       }
    
     }
@@ -429,6 +449,7 @@ document.addEventListener('DOMContentLoaded', function() {
         janusRemoteStreamPeers[displayId] = new RTCPeerConnection(configuration);
    
         janusRemoteStreamPeers[displayId].ontrack = function (e) {
+          console.log(e.stream)
           janusRemoteStreams[displayId] = e.streams[0];
           streamSize = Object.keys(janusRemoteStreams).length;
           let videoTagClassName;
@@ -538,6 +559,7 @@ document.addEventListener('DOMContentLoaded', function() {
    
       try {
         tLogBox('send', joinData);
+        console.log('send', joinData)
         signalSocketIo.emit('knowledgetalk', joinData);
       } catch (err) {
         if (err instanceof SyntaxError) {
@@ -560,6 +582,7 @@ document.addEventListener('DOMContentLoaded', function() {
    
       try {
         tLogBox('### shareData send ### ', shareData);
+        console.log('### shareData send ### ', shareData);
         signalSocketIo.emit('knowledgetalk', shareData);
       } catch (err) {
         if (err instanceof SyntaxError) {
@@ -587,7 +610,7 @@ document.addEventListener('DOMContentLoaded', function() {
       try {
         console.log('send', sendData);
         signalSocketIo.emit('knowledgetalk', sendData);
-        dispose();
+
       } catch (err) {
         if (err instanceof SyntaxError) {
           alert(' there was a syntaxError it and try again : ' + err.message);

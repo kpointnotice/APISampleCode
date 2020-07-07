@@ -173,11 +173,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 peerCon.ontrack = onAddStreamHandler;
                 localStream.getTracks().forEach(function (track) {
                     peerCon.addTrack(track, localStream);
+                    //addTrack 다른 유저에게 전송될 트랙들 묶음을 신규 미디어 트랜을 추가한다.
                 });
 
                 peerCon.setRemoteDescription(new RTCSessionDescription(data.sdp));
                 peerCon.createAnswer().then(sdp => {
                     peerCon.setLocalDescription(new RTCSessionDescription(sdp));
+                    // ??? setLocalDescription 로컬 설명은 미디어 형식을 포함하는 연결의 로컬 엔드에 대한 속성을 명시
 
                     let ansData = {
                         eventOp: 'SDP',

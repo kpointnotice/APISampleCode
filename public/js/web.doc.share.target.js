@@ -19,17 +19,22 @@ document.addEventListener('DOMContentLoaded', function() {
       if (!data.eventOp && !data.signalOp) {
         console.log('error', 'eventOp undefined');
       }
-   
-      if (data.eventOp === 'Login') {
+      
+      if(data.eventOp === 'Login' && data.code === '200'){
+        tTextbox('로그인 되었습니다.')
         loginBtn.disabled = true;
       }
-   
+      if(data.eventOp === 'Login' && data.code !== '200'){
+        tTextbox('아이디 비밀번호를 확인해주세요.')
+      }
       if (data.eventOp === 'Invite') {
+        tTextbox(data.userId+'님이 통화를 요청합니다.')
         roomId = data.roomId;
         joinBtn.disabled = false;
-      }
-   
-      if (data.eventOp === 'Join') {
+      } 
+      //수정 200
+      if (data.eventOp === 'Join' && data.code === '200') {
+        tTextbox('통화가 연결 되었습니다.')
         joinBtn.disabled = true;
         navigator.mediaDevices
           .getUserMedia({ video: true, audio: false })
@@ -103,7 +108,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }
       }
    
+      //문서를 공유 했을대 eventOp
       if (data.eventOp === 'FileShareStartSvr') {
+        tTextbox('상대방이 문서를 공유했습니다.')
         let remoteImage = new Image();
    
         remoteImage.addEventListener('load', function() {
@@ -120,7 +127,8 @@ document.addEventListener('DOMContentLoaded', function() {
    
         remoteImage.src = data.fileInfoList.url;
       }
-   
+      
+      //문서를 클릭했을때??
       if (data.eventOp === 'FileShareSvr') {
         let remoteImage = new Image();
    
