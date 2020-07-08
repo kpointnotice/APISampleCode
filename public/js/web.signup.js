@@ -8,10 +8,17 @@ document.addEventListener('DOMContentLoaded', function () {
     let reqNo = 1
    
     signalSocketIo.on('knowledgetalk', function (data) {
-      console.log('receive', data);
+      tLogBox('receive', data);
    
       if (!data.eventOp && !data.signalOp) {
-        console.log('error', 'eventOp undefined');
+        tLogBox('error', 'eventOp undefined');
+      }
+
+      if (data.eventOp === 'SignUp' && data.code ==='200'){
+        tTextbox('회원가입이 되셨습니다.')
+      } 
+      if (data.eventOp === 'SignUp' && data.code ==='409'){
+        tTextbox('이미 가입되어 있는 ID입니다.')
       }
     });
    
@@ -28,7 +35,7 @@ document.addEventListener('DOMContentLoaded', function () {
       }
    
       try {
-        console.log('send', signupData);
+        tLogBox('send', signupData);
         signalSocketIo.emit('knowledgetalk', signupData);
       } catch (err) {
         if (err instanceof SyntaxError) {

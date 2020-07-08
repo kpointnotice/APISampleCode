@@ -32,6 +32,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     try {
       tLogBox('send', loginData);
+      console.log('send', loginData);
       signalSocketIo.emit('knowledgetalk', loginData);
     } catch (err) {
       if (err instanceof SyntaxError) {
@@ -54,6 +55,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     try {
       tLogBox('send', callData);
+      console.log('send', callData);
       signalSocketIo.emit('knowledgetalk', callData);
     } catch (err) {
       if (err instanceof SyntaxError) {
@@ -77,6 +79,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     try {
       tLogBox('send', joinData);
+      console.log('send', joinData);
       signalSocketIo.emit('knowledgetalk', joinData);
     } catch (err) {
       if (err instanceof SyntaxError) {
@@ -103,6 +106,7 @@ document.addEventListener('DOMContentLoaded', function () {
     };
     try {
       tLogBox('send', sendData);
+      console.log('send', sendData);
       signalSocketIo.emit('knowledgetalk', sendData);
       dispose();
     } catch (err) {
@@ -196,6 +200,8 @@ document.addEventListener('DOMContentLoaded', function () {
     } catch (err) {
       tLogBox('getUserMedia err', err);
       tLogBox('http 에서는 getUserMedia를 가지고 올 수 없습니다. https 에서 실행해주세요.');
+      console.log('getUserMedia err', err);
+      console.log('http 에서는 getUserMedia를 가지고 올 수 없습니다. https 에서 실행해주세요.');
     }
   }
 
@@ -260,6 +266,7 @@ document.addEventListener('DOMContentLoaded', function () {
             };
 
             tLogBox('send', sdpData);
+            console.log('send', sdpData);
             signalSocketIo.emit('knowledgetalk', sdpData);
             break;
         }
@@ -321,6 +328,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     tLogBox('janusRemoteStreamPeers : ', janusRemoteStreamPeers)
+    console.log('janusRemoteStreamPeers : ', janusRemoteStreamPeers)
     for (let key in janusRemoteStreamPeers) {
       janusRemoteStreamPeers[key].close();
       janusRemoteStreamPeers[key] = null;
@@ -331,20 +339,30 @@ document.addEventListener('DOMContentLoaded', function () {
 
   signalSocketIo.on('knowledgetalk', function (data) {
     tLogBox('receive', data);
+    console.log('receive', data);
 
     if (!data.eventOp && !data.signalOp) {
       tLogBox('error', 'eventOp undefined');
-
+      console.log('error', 'eventOp undefined');
     }
 
     switch (data.eventOp || data.signalOp) {
       case 'Login':
+        if (data.code === '200'){
         callBtn.disabled = false;
+        loginBtn.disabled = true;
         tTextbox('로그인 되었습니다.');
+        } else if (data.code === '111'){
+          tTextbox('이미 로그인 중입니다.')
+        } else if (data.code !== '200'){
+          tTextbox('아이디 비번을 확인해 주세요')
+        }
         break;
 
       case 'Invite':
+        tTextbox('회의 초대 요청이 들어왔습니다.')
         roomId = data.roomId;
+        loginBtn.disabled = true;
         callBtn.disabled = true;
         joinBtn.disabled = false;
         break;
@@ -352,7 +370,8 @@ document.addEventListener('DOMContentLoaded', function () {
       case 'Call':
         roomId = data.roomId;
         exitBtn.disabled = false;
-        tTextbox('회의에 초대 하였습니다.');
+        loginBtn.disabled = true;
+        tTextbox('회의에 초대 요청 중입니다. \n 잠시만 기다려주세요...');
         if (data.code !== '200') {
           console.log('Call err : ', data);
         } else if (data.status === 'accept') {
@@ -389,13 +408,24 @@ document.addEventListener('DOMContentLoaded', function () {
         break;
 
       case 'Presence':
-        if (data.action === 'end') {
+        if (data.action === 'end' || (data.signalOp === 'Presence' && data.action === 'end')) {
+          tTextbox('회의가 종료 되었습니다.')
+          exitBtn.disabled = true;
+          joinBtn.disabled = true;
           dispose();
+        }
+        if (data.action === 'join') {
+          tTextbox('회의를 시작 하셔도 됩니다.')
         } 
         break;
 
       case 'ExitRoom':
-        dispose();
+        if (data.code === '200'){
+          callBtn.disabled = false;
+          loginBtn.disabled = true;
+          tTextbox('회의를 종료 하셨습니다.')
+          dispose();
+        }
         break;
     }
 

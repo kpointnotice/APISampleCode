@@ -6,10 +6,28 @@ document.addEventListener('DOMContentLoaded', function () {
     let reqNo = 1
 
     signalSocketIo.on('knowledgetalk', function (data) {
-        console.log('receive', data);
+        tLogBox('receive', data);
      
         if (!data.eventOp && !data.signalOp) {
-          console.log('error', 'eventOp undefined');
+            tLogBox('error', 'eventOp undefined');
+        }
+        
+        //로그인 이벤트
+        if( data.eventOp === 'Login' && data.code === '200'){
+            tTextbox('로그인 되었습니다.')
+            loginBtn.disabled = true;
+            logoutBtn.disabled = false;
+        } else if (data.eventOp === 'Login' && data.code === '111'){
+            tTextbox('이미 로그인 되어 있습니다.')
+        } else if (data.eventOp === 'Login' && data.code !== '200'){
+            tTextbox('아이디 비밀번호를 다시 확인해주세요.')
+        }
+
+        //로그 아웃
+        if (data.eventOp === 'Logout' && data.code === '200'){
+            tTextbox('로그 아웃 되었습니다.');
+            loginBtn.disabled = false;
+            logoutBtn.disabled = true;
         }
       });
 
@@ -25,7 +43,7 @@ document.addEventListener('DOMContentLoaded', function () {
         };
 
         try {
-            console.log('send', loginData);
+            tLogBox('send', loginData);
             signalSocketIo.emit('knowledgetalk', loginData);
         } catch (err) {
             if (err instanceof SyntaxError) {
@@ -45,7 +63,7 @@ document.addEventListener('DOMContentLoaded', function () {
             reqDate: nowDate()
         };
         try {
-            console.log('send', logoutData);
+            tLogBox('send', logoutData);
             signalSocketIo.emit('knowledgetalk', logoutData);
         } catch (err) {
             if (err instanceof SyntaxError) {
