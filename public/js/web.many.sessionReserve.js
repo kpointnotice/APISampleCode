@@ -31,7 +31,7 @@ document.addEventListener('DOMContentLoaded', function() {
       //초대할때 RoomId가 시그널서버에서 브로드캐슬로 데이터를 보내준다.
       if (data.eventOp === 'Invite') {
         roomId = data.roomId;
-        tTextbox(data.userId+'님이 회의 초대 요청이 들어 왔습니다.')
+        tTextbox(data.userId+'님으로 부터 회의초대 요청이 들어 왔습니다.')
         // sessionBtn.disabled = false;
         callBtn.disabled = true;
         joinBtn.disabled = false;
@@ -39,11 +39,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
       //자료 공유 활성화
       if (data.eventOp === 'Join' && data.code === '200'){
-        tTextbox('회의를 시작하셔도 됩니다.')
-        sessionBtn.disabled = false
-      } else if(data.signalOp === 'Presence'){
-        tTextbox('회의를 시작하셔도 됩니다.')
-        sessionBtn.disabled = false
+        tTextbox('회의를 시작하셔도 됩니다.');
+        sessionBtn.disabled = false;
+      } else if(data.signalOp === 'Presence' && data.action === 'join'){
+        tTextbox('회의를 시작하셔도 됩니다.');
+        sessionBtn.disabled = false;
+        callBtn.disabled = true;
       }
    
       if (data.eventOp === 'Call' && data.code === '200') {
@@ -67,25 +68,26 @@ document.addEventListener('DOMContentLoaded', function() {
       }
       
       //공유 자원 예약 이벤트
-      if(data.eventOp === 'SessionReserve' && data.message === 'OK'){
+      if(data.eventOp === 'SessionReserve' && data.code === '200'){
         tTextbox('공유자원이 예약 되었습니다')
       } 
-      if(data.eventOp === 'SessionReserve' && data.message === 'Resources already in use'){
-        tTextbox('다른분이 먼저 공유자원을 예약 하셨습니다. 기다려주세요')
+      if(data.eventOp === 'SessionReserve' && data.code !== '200'){
+        tTextbox('다른분이 먼저 공유자원을 예약 하셨습니다.')
       }
 
       //회의 종료시 response
       if(data.eventOp === 'ExitRoom' && data.message === 'OK'){
-        tTextbox('회의를 종료 종료합니다.')
+        tTextbox('회의를 종료합니다.')
         sessionBtn.disabled = true
       } 
       console.log('data',data)
-      if(data.signalOp === 'Presence' && data.action === 'exit'){
-        tTextbox('회의가 종료 종료합니다.')
+      if(data.signalOp === 'Presence' && (data.action === 'exit' || data.action === 'end')){
+        tTextbox('회의를 종료합니다.')
         sessionBtn.disabled = true
         exitBtn.disabled = true
-        callBtn.disabled = true
-        loginBtn.disabled = false
+        callBtn.disabled = false
+        loginBtn.disabled = true
+        joinBtn.disabled = true;
       }
    
       if (data.eventOp === 'Candidate') {
@@ -152,7 +154,7 @@ document.addEventListener('DOMContentLoaded', function() {
       };
       //회의 초대 대상 ['melon', 'apple']
       try {
-        tTextbox('회의에 초대 중입니다...')
+        tTextbox('회의에 초대 중입니다.')
         console.log('send', callData);
         signalSocketIo.emit('knowledgetalk', callData);
       } catch (err) {
@@ -188,8 +190,8 @@ document.addEventListener('DOMContentLoaded', function() {
     });
    
     exitBtn.addEventListener('click', function(e) {
-      loginBtn.disabled = false;
-      callBtn.disabled = true;
+      loginBtn.disabled = true;
+      callBtn.disabled = false;
       joinBtn.disabled = true;
       exitBtn.disabled = true;
       
@@ -202,13 +204,9 @@ document.addEventListener('DOMContentLoaded', function() {
       };
 
       try {
-        // printBox
-        // console.log(callEndData);
-        // tLogBox('send');
         console.log('send',callEndData);
         signalSocketIo.emit('knowledgetalk', callEndData);
-        // printBox
-        // console.log('send',callEndData);
+
       } catch (err) {
         if (err instanceof SyntaxError) {
             alert('there was a syntaxError it and try again:' + err.message);
@@ -216,8 +214,6 @@ document.addEventListener('DOMContentLoaded', function() {
             throw err;
         }
       }
-
-      // signalSocketIo.emit('exitroom', callData);
     });
    
    

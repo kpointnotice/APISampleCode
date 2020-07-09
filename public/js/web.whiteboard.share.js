@@ -27,11 +27,11 @@ document.addEventListener('DOMContentLoaded', function() {
         callBtn.disabled = false;
         tTextbox('로그인 되었습니다.')
       } else if(data.eventOp === 'Login' && data.code !=='200') {
-        tTextbox('아이디 비번을 다시 확인해주세요')
+        tTextbox('아이디와 비밀번호를 다시 확인해주세요')
       }
 
       if (data.eventOp === 'Invite'){
-        tTextbox(data.userId + '님이 통화를 요청하였습니다.')
+        tTextbox(data.userId + '님으로 부터 통화 요청이 왔습니다.')
       }
       
       if (data.eventOp === 'Call' && data.code !== '200'){
@@ -39,8 +39,6 @@ document.addEventListener('DOMContentLoaded', function() {
       } else if (data.eventOp === 'Call') {
         tTextbox('전화 연결중입니다...')
         callBtn.disabled = true;
-        whiteboardBtn.disabled = false;
-        whiteboardClearBtn.disabled = false;
         navigator.mediaDevices
           .getUserMedia({ video: true, audio: false })
           .then(stream => {
@@ -50,6 +48,8 @@ document.addEventListener('DOMContentLoaded', function() {
       }
       
       if(data.signalOp === 'Presence' && data.action === 'join'){
+        whiteboardBtn.disabled = false;
+        whiteboardClearBtn.disabled = false;
         tTextbox('통화 연결이 되었습니다.')
       }
 
@@ -92,6 +92,35 @@ document.addEventListener('DOMContentLoaded', function() {
           });
         }
       }
+
+      
+      //화이트 보드 한번 더 클릭 했을때 이벤트
+      if(data.eventOp === 'WhiteBoardEnd' && data.code === '481'){
+        context.clearRect(0, 0, whiteboard.width, whiteboard.height);
+    
+        let clearData = {
+          signalOp: 'Reset',
+          reqNo: reqNo++,
+          reqDate: nowDate(),
+          roomId
+        };
+    
+        try {
+          console.log('send', clearData);
+          signalSocketIo.emit('knowledgetalk', clearData);
+        } catch (err) {
+          if (err instanceof SyntaxError) {
+            alert(' there was a syntaxError it and try again : ' + err.message);
+          } else {
+            throw err;
+          }
+        }
+      }
+
+
+
+
+
    
       if (data.eventOp === 'Candidate') {
         if (!data.candidate) return;
