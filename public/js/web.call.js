@@ -12,6 +12,7 @@ document.addEventListener('DOMContentLoaded', function () {
     let localStream;
     let peerCon;
     let configuration = [];
+    let roomId;
 
 
     loginBtn.addEventListener('click', function (e) {
@@ -136,24 +137,24 @@ document.addEventListener('DOMContentLoaded', function () {
             tTextbox('로그인 되었습니다');
         }
 
+        // if(data.eventOp === '')
+
         if (data.eventOp === 'Call') {
-            if (data.message !== 'OK') {
-                tTextbox(`(${inputTarget.value})님이 로그인 되어 있지 않습니다!`)
-                return;
-            } else if (data.message === 'OK') {
-                tTextbox(`${inputTarget.value}님에게 통화 연결 중`)
-            }
+            
+            
+            if (data.code === '200') {
+                console.log('@!@#!@#')
+                tTextbox(`${inputTarget.value}님에게 통화 연결 중`);
 
-            configuration.push({
-                urls: data.serverInfo['_j'].turn_url,
-                credential: data.serverInfo['_j'].turn_credential,
-                username: data.serverInfo['_j'].turn_username
-            });
-
-            callBtn.disabled = true;
-            exitBtn.disabled = false;
-            navigator.mediaDevices
-                .getUserMedia({
+                configuration.push({
+                    urls: data.serverInfo['_j'].turn_url,
+                    credential: data.serverInfo['_j'].turn_credential,
+                    username: data.serverInfo['_j'].turn_username
+                });
+    
+                callBtn.disabled = true;
+                exitBtn.disabled = false;
+                navigator.mediaDevices.getUserMedia({
                     video: true,
                     audio: true
                 })
@@ -161,6 +162,34 @@ document.addEventListener('DOMContentLoaded', function () {
                     localStream = stream;
                     localVideo.srcObject = stream;
                 });
+
+            } else {
+                tTextbox('확인')
+                console.log('확인')
+                callBtn.disabled = true;
+                exitBtn.disabled = true;
+                loginBtn.disabled = false;
+                tTextbox(`(${inputTarget.value})님이 로그인 되어 있지 않습니다!`)
+                
+                let logoutData = {
+                    eventOp: 'Logout',
+                    reqNo: reqNo++,
+                    userId: inputId.value,
+                    reqDate: nowDate()
+                  };
+                  try {
+                    tLogBox('send', logoutData);
+                    console.log('send', logoutData);
+                    signalSocketIo.emit('knowledgetalk', logoutData);
+                  } catch (err) {
+                    if (err instanceof SyntaxError) {
+                        alert('there was a syntaxError it and try again:' + err.message);
+                    } else {
+                        throw err;
+                    }
+                  }
+            }
+
         }
 
         if (data.eventOp == 'SDP') {
@@ -237,6 +266,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         if (data.signalOp === 'Presence' && data.action === 'exit') {
+            tTextbox('통화 종료 되었습니다.')
             localStream.getTracks()[0].stop();
             localStream.getTracks()[1].stop();
             localStream = null;

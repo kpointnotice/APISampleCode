@@ -70,6 +70,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         joinBtn.disabled = false;
         exitBtn.disabled = true;
+        
         let callEndData = {
             eventOp: 'ExitRoom',
             reqNo: reqNo,
