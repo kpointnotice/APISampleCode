@@ -97,11 +97,39 @@ document.addEventListener('DOMContentLoaded', function () {
             console.log('send', chatData);
             chatTextBox( chatData.userId + ' : ' + chatData.message)
             signalSocketIo.emit('knowledgetalk', chatData);
+            var el = document.getElementById('message');
+            el.value = '';
         } catch (err) {
             if (err instanceof SyntaxError) {
                 alert(' there was a syntaxError it and try again : ' + err.message);
             } else {
                 throw err;
+            }
+        }
+    });
+
+    //채팅 작성 엔터 이벤트
+    message.addEventListener('keydown', function (e) {
+        if(event.keyCode == 13){
+            let chatData = {
+                signalOp: 'Chat',
+                userId: inputId.value,
+                message: message.value
+            }
+
+            try {
+                tLogBox('send', chatData);
+                console.log('send', chatData);
+                chatTextBox(chatData.userId + ' : ' + chatData.message)
+                signalSocketIo.emit('knowledgetalk', chatData);
+                var el = document.getElementById('message');
+                el.value = '';
+            } catch (err) {
+                if (err instanceof SyntaxError) {
+                    alert(' there was a syntaxError it and try again : ' + err.message);
+                } else {
+                    throw err;
+                }
             }
         }
     });
@@ -135,7 +163,7 @@ document.addEventListener('DOMContentLoaded', function () {
             chatBtn.disabled = false;
             joinBtn.disabled = true;
             exitBtn.disabled = false;
-            tTextbox('통화가 연결되었습니다. 자유롭게 채팅을 이용하세요.');
+            tTextbox('통화가 연결되었습니다.');
         }
         if (data.eventOp === 'Join' && data.code !== '200') {
             tTextbox('알 수 없는 에러가 발생하였습니다 관리자에게 문의주세요.');
@@ -146,22 +174,28 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         //방장이 나갔을때 이벤트
-        if (data.signalOp ==='Presence' && data.action ==='end'){
+        if (data.signalOp ==='Presence' && (data.action ==='end'|| data.action ==='exit')){
             message.disabled = true;
             chatBtn.disabled = true;
             loginBtn.disabled = true;
             exitBtn.disabled = true;
             joinBtn.disabled = false;
-            tTextbox('상대방이 통화를 종료 하였습니다.')
+
+            //종료시 글 내용 삭제이벤트
+            document.getElementById('chat_Box').innerHTML = ""
+            tTextbox('통화가 종료 되었습니다.')
         }
-        //내가 나갔을 때 이벤트
+        //내가 통화 종료를 클릭시 이벤트 
         if (data.eventOp === 'ExitRoom' && data.code ==='200'){
-            message.disabled = true;
-            chatBtn.disabled = true;
             loginBtn.disabled = true;
             exitBtn.disabled = true;
-            joinBtn.disabled = true;
-            tTextbox('통화를 종료 되었습니다.')
+            message.disabled = true;
+            chatBtn.disabled = true;
+            joinBtn.disabled = false
+
+            //종료시 글 내용 삭제이벤트
+            document.getElementById('chat_Box').innerHTML = ""
+            tTextbox('통화가 종료 되었습니다.')
         }
     })
 

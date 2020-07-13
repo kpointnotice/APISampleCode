@@ -8,19 +8,22 @@
     <title>Sample Consulting Web</title>
   </head>
   <body>
-    <div class='login'>
-      <input type='hidden' id='inputId' value='orange' /> <br />
-      <input type='hidden' id='inputPw' type='password' value='orange' /> <br />
-      <button id='loginBtn'>로그인</button>
-      <button id='callBtn' disabled>회의초대</button>
-      <button id='joinBtn' disabled>회의참여</button>
-      <button id='shareBtn' disabled>화면공유</button>
-      <button id='exitBtn' disabled>회의종료</button>
+    <div class="titlebox">
+      <div class='login'>
+        <input type='hidden' id='inputId' value='orange' /> <br />
+        <input type='hidden' id='inputPw' type='password' value='orange' /> <br />
+        <button id='loginBtn'>로그인</button>
+        <button id='callBtn' disabled>회의초대</button>
+        <button id='joinBtn' disabled>회의참여</button>
+        <button id='shareBtn' disabled>화면공유</button>
+        <button id='exitBtn' disabled>회의종료</button>
+      </div>
     </div>
-<!-- 
-    <div class='video-box' id='VideoBox'>
+    
+    
+    <div class='video-box' id='VideoBox' style="display: none;">
       <dl class='video-twobytwo' id='VIDEOONETOMANY'></dl>
-    </div> -->
+    </div>
     
     <div class='screen-video-wrap' id='ScreenSharingVideo'>
       <div class='screen-video' id='screen-share-video'></div>

@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', function() {
    
     let localStream;
     let reqNo = 1;
-   
+    let roomId;
     let kurentoPeer;
    
     signalSocketIo.on('knowledgetalk', function(data) {
@@ -51,7 +51,28 @@ document.addEventListener('DOMContentLoaded', function() {
         roomId = data.roomId;
         exitBtn.disabled = false;
       } else if (data.eventOp === 'Call' && data.code !== '200'){
-        tTextbox('상대방이 로그인 되어 있지 않습니다.')
+        tTextbox('상대방이 로그인 되어 있지 않습니다.');
+
+        roomId = data.roomId;  
+        let sendData = {
+          eventOp: 'ExitRoom',
+          reqNo: reqNo++,
+          userId: inputId.value,
+          userName : inputId.value,
+          reqDate: nowDate(),
+          roomId: roomId
+        };
+        try {
+          console.log('send', sendData);
+          signalSocketIo.emit('knowledgetalk', sendData);
+  
+        } catch (err) {
+          if (err instanceof SyntaxError) {
+            alert(' there was a syntaxError it and try again : ' + err.message);
+          } else {
+            throw err;
+          }
+        }
       }
       
    

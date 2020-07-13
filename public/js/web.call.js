@@ -26,6 +26,7 @@ document.addEventListener('DOMContentLoaded', function () {
         };
 
         try {
+            console.log('send(login)', loginData);
             tLogBox('send(login)', loginData);
             signalSocketIo.emit('knowledgetalk', loginData);
         } catch (err) {
@@ -49,6 +50,7 @@ document.addEventListener('DOMContentLoaded', function () {
         };
 
         try {
+            console.log('send(call)', callData);
             tLogBox('send(call)', callData);
             signalSocketIo.emit('knowledgetalk', callData);
         } catch (err) {
@@ -83,6 +85,7 @@ document.addEventListener('DOMContentLoaded', function () {
         };
 
         try {
+            console.log('send', callEndData);
             tLogBox('send', callEndData);
             signalSocketIo.emit('knowledgetalk', callEndData);
         } catch (err) {
@@ -109,6 +112,7 @@ document.addEventListener('DOMContentLoaded', function () {
         };
 
         try {
+            console.log('send(onIceCandidateHandler)', iceData);
             tLogBox('send(onIceCandidateHandler)', iceData);
             signalSocketIo.emit('knowledgetalk', iceData);
         } catch (err) {
@@ -125,16 +129,20 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     signalSocketIo.on('knowledgetalk', function (data) {
+        console.log('receive', data);
         tLogBox('receive', data);
 
         if (!data.eventOp && !data.signalOp) {
+            console.log('error', 'eventOp undefined');
             tLogBox('error', 'eventOp undefined');
         }
 
-        if (data.eventOp === 'Login') {
+        if (data.eventOp === 'Login' && data.code === '200') {
             loginBtn.disabled = true;
             callBtn.disabled = false;
             tTextbox('로그인 되었습니다');
+        } else if(data.eventOp === 'Login' && data.code !== '200') {
+            tTextbox('아이디 비밀번호를 다시 확인해주세요')
         }
 
         // if(data.eventOp === '')
@@ -250,6 +258,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             try {
                 tTextbox('전화 연결이 되었습니다.');
+                console.log('send(candidate)', iceData);
                 tLogBox('send(candidate)', iceData);
                 signalSocketIo.emit('knowledgetalk', iceData);
             } catch (err) {
@@ -262,7 +271,8 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         if(data.eventOp === 'ExitRoom'){
-            tTextbox(`${inputTarget.value}님이 통화를 종료 하였습니다.`);
+            // tTextbox(`${inputTarget.value}님이 통화를 종료 하였습니다.`);
+            tTextbox('통화 종료 되었습니다.');
         }
 
         if (data.signalOp === 'Presence' && data.action === 'exit') {
@@ -278,6 +288,26 @@ document.addEventListener('DOMContentLoaded', function () {
 
             callBtn.disabled = false;
             exitBtn.disabled = true;
+
+            let callEndData = {
+                eventOp: 'ExitRoom',
+                reqNo: reqNo,
+                userId: inputId.value,
+                reqDate: nowDate(),
+                roomId
+            };
+
+            try {
+                console.log('send', callEndData);
+                tLogBox('send', callEndData);
+                signalSocketIo.emit('knowledgetalk', callEndData);
+            } catch (err) {
+                if (err instanceof SyntaxError) {
+                    alert('there was a syntaxError it and try again:' + err.message);
+                } else {
+                    throw err;
+                }
+            }
         }
 
     });

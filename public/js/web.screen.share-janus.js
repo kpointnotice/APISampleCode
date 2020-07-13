@@ -32,30 +32,56 @@ document.addEventListener('DOMContentLoaded', function() {
           break;
    
         case 'Invite':
+          tTextbox(data.userId+'님이 회의방에 초대를 하였습니다.')
           roomId = data.roomId;
           callBtn.disabled = true;
           joinBtn.disabled = false;
           break;
    
         case 'Call':
+          tTextbox('회의에 초대 중입니다.')
           roomId = data.roomId;
           callBtn.disabled = true;
-          shareBtn.disabled = false;
+          // shareBtn.disabled = false;
           exitBtn.disabled = false;
-   
+          joinBtn.disabled = true;
           if (data.code !== '200') {
             tLogBox('Call err : ', data);
+            tTextbox('상대방이 로그인 되어 있지 않습니다.');
+
+            shareBtn.disabled = true;
+            exitBtn.disabled = true;
+            callBtn.disabled = false;
+            let sendData = {
+              eventOp: 'ExitRoom',
+              reqNo: reqNo++,
+              userId: inputId.value,
+              userName : inputId.value,
+              reqDate: nowDate(),
+              roomId: roomId
+            };
+            try {
+              console.log('send', sendData);
+              signalSocketIo.emit('knowledgetalk', sendData);
+      
+            } catch (err) {
+              if (err instanceof SyntaxError) {
+                alert(' there was a syntaxError it and try again : ' + err.message);
+              } else {
+                throw err;
+              }
+            }
+
           } else if (data.status === 'accept') {
             if (data.isSfu === true) {
               createSDPOffer(data.videoWidth, data.videoHeight, data.videoFramerate, roomId); // peer 생성 
             } else {
-   
+    
             }
           }
           break;
    
         case 'Join':
-          joinBtn.disabled = true;
           roomId = data.roomId;
           exitBtn.disabled = false;
           if (data.code !== '200') {
@@ -72,7 +98,10 @@ document.addEventListener('DOMContentLoaded', function() {
           break;
    
         case 'SDP':
+          tTextbox('회의를 시작하세요')
           roomId = data.roomId;
+          joinBtn.disabled = true
+          // shareBtn.disabled = false;
           exitBtn.disabled = false;
           if (data.sdp && data.sdp.type === 'offer' && data.usage === 'cam') {
             createSDPAnwser(data);
@@ -87,6 +116,7 @@ document.addEventListener('DOMContentLoaded', function() {
               if (data.type === 'maker') {
                 if (data.sdp) {
                   if (data.isSfu === true) {
+                    console.log('remotedescription!!!!!!!!!!!!!!')
                     janusScreenShareStreamPeer.setRemoteDescription(new RTCSessionDescription(data.sdp));
                   }
                 }
@@ -96,9 +126,11 @@ document.addEventListener('DOMContentLoaded', function() {
           break;
    
         case 'Candidate' :
+          tTextbox('화면 공유가 되었습니다.')
           if (data.useMediaSvr=== 'Y') {
             if (data.usage ==='screen') {
               if (data.candidate) {
+                console.log('receive candidate-----')
                 janusScreenShareStreamPeer.addIceCandidate(data.candidate);
               } 
             }
@@ -128,7 +160,6 @@ document.addEventListener('DOMContentLoaded', function() {
             };
             tLogBox('send', sendData);
             signalSocketIo.emit('knowledgetalk', sendData);
-   
           }
    
           break;
@@ -141,17 +172,99 @@ document.addEventListener('DOMContentLoaded', function() {
               ScreenShareConferenceEnd();
             }
           break;
-      
       }
+
+      if(data.signalOp === 'Presence' && data.action === 'join'){
+        shareBtn.disabled= false
+      }
+
+      //상대방이 회의 종료시
+      if(data.signalOp === 'Presence' && (data.action === 'end' || data.action ==='exit')){
+        callBtn.disabled = false;
+        exitBtn.disabled = true;
+        if(janusLocalStream && janusLocalStream.getTracks()) {
+          janusLocalStream.getTracks()[0].stop();
+          janusLocalStream.getTracks()[1].stop();
+          janusLocalStream = null;
+        }
+  
+        if (janusLocalStreamPeer) {
+          janusLocalStreamPeer.close();
+          janusLocalStreamPeer = null;
+        }
+  
+        if (Object.keys(janusRemoteStreams).length) {
+          for (let i in janusRemoteStreams) {
+            if(janusRemoteStreams[i] && janusRemoteStreams[i].getTracks()) {
+              janusRemoteStreams[i].getTracks()[0].stop();
+              janusRemoteStreams[i].getTracks()[1].stop();
+              janusRemoteStreams[i] = null;
+            }
+          }
+  
+          janusRemoteStreams = {};
+        }
+  
+        if (Object.keys(janusRemoteStreamPeers).length) {
+          for (let i in janusRemoteStreamPeers) {
+            janusRemoteStreamPeers[i].close();
+          }
+    
+          janusRemoteStreamPeers = {};
+        }
+  
+        if(janusScreenShareStream && janusScreenShareStream.getTracks()) {
+          janusScreenShareStream.getTracks()[0].stop();
+          janusScreenShareStream = null;
+        }
+  
+        if (janusScreenShareStreamPeer) {
+          janusScreenShareStreamPeer.close();
+          janusScreenShareStreamPeer = null;
+        }
+  
+        let shareVideoDiv = document.getElementById('screen-share-video');
+        while (shareVideoDiv.hasChildNodes('video')) {
+          shareVideoDiv.removeChild(shareVideoDiv.firstChild);
+        }
+        
+   
+        let sendData = {
+          eventOp: 'ExitRoom',
+          reqNo: reqNo++,
+          userId: inputId.value,
+          userName : inputId.value,
+          reqDate: nowDate(),
+          roomId: roomId
+        };
+        try {
+          console.log('send', sendData);
+          signalSocketIo.emit('knowledgetalk', sendData);
+  
+        } catch (err) {
+          if (err instanceof SyntaxError) {
+            alert(' there was a syntaxError it and try again : ' + err.message);
+          } else {
+            throw err;
+          }
+        }
+      }
+      if(data.eventOp === 'ExitRoom' && data.code ==='200'){
+        shareBtn.disabled = true;
+        tTextbox('회의가 종료 되었습니다.')
+      }
+      //상대방이 로그인 아닐시
+      if(data.eventOp === 'Call' && data.code !== '200'){
+        tTextbox('상대방이 로그인 되어 있지 않습니다.')
+      }
+      
     });
-   
-   
    
     const createScreenShareSdpAnswer = async(data) => {
    
       try {
    
-        janusScreenShareStreamPeer = new RTCPeerConnection(configuration);
+        janusScreenShareStreamPeer = new RTCPeerConnection();
         tLogBox('peer connection ::: ', janusScreenShareStreamPeer);
         console.log('peer connection ::: ',janusScreenShareStreamPeer);
    
@@ -169,7 +282,7 @@ document.addEventListener('DOMContentLoaded', function() {
             eventOp: 'Candidate',
             reqNo: data.reqNo,
             reqDate: data.reqDate,
-            userId: data.userId,
+            userId: inputId.value,
             roomId: data.roomId,
             useMediaSvr: 'Y',
             usage: 'screen',
@@ -182,16 +295,15 @@ document.addEventListener('DOMContentLoaded', function() {
    
         
         await janusScreenShareStreamPeer.setRemoteDescription(new RTCSessionDescription(data.sdp));
-        await janusScreenShareStreamPeer.createAnswer().then(sdp => {
-          janusScreenShareStreamPeer.setLocalDescription(sdp);
-
-        })
+        let sdp = await janusScreenShareStreamPeer.createAnswer();
+        await janusScreenShareStreamPeer.setLocalDescription(new RTCSessionDescription(sdp));
         //추가부분
-        let sdp = await janusScreenShareStreamPeer.createOffer();
-        await janusScreenShareStreamPeer.setLocalDescription(sdp);
+        // let sdp = await janusScreenShareStreamPeer.createOffer();
+        // await janusScreenShareStreamPeer.setLocalDescription(sdp);
 
         janusScreenShareStreamPeer.onicegatheringstatechange = async (ev) => {
           let connection = ev.target;
+            console.log(connection.iceGatheringState)
             switch (connection.iceGatheringState) {
               case 'gathering':
                 break;
@@ -199,7 +311,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 let sendData = {
                   eventOp: 'SDP',
                   reqNo: data.reqNo,
-                  userId: data.userId,
+                  userId: inputId.value,
                   type: 'user',
                   roomId: data.roomId,
                   reqDate: data.reqDate,
@@ -207,7 +319,7 @@ document.addEventListener('DOMContentLoaded', function() {
                   isRTPShare: false,
                   useMediaSvr: 'Y',
                   usage: 'screen',
-                  sdp: sdp,
+                  sdp: connection.localDescription,
                   isSfu: true
                 };
     
@@ -217,11 +329,13 @@ document.addEventListener('DOMContentLoaded', function() {
             }
           }
         } catch (error) {
-         tLogBox(' janusScreenShareStreamPeer [error]    ', error);
+          console.log(error);
+          tLogBox(' janusScreenShareStreamPeer [error]    ', error);
         };
    
    
         janusScreenShareStreamPeer.oniceconnectionstatechange = (e) => {
+          console.log('------------------', janusScreenShareStreamPeer.iceConnectionState)
           if ((janusScreenShareStreamPeer && janusScreenShareStreamPeer.iceConnectionState === 'disconnected') ||
             (janusScreenShareStreamPeer && janusScreenShareStreamPeer.iceConnectionState === 'failed') ||
             (janusScreenShareStreamPeer && janusScreenShareStreamPeer.iceConnectionState === 'closed')) {
@@ -250,7 +364,8 @@ document.addEventListener('DOMContentLoaded', function() {
         } catch (error) {
           tLogBox('createScreenShereSdpOffer'  , error);
         }
-        janusScreenShareStreamPeer = new RTCPeerConnection(configuration);
+        janusScreenShareStreamPeer = new RTCPeerConnection();
+        console.log(janusScreenShareStreamPeer);
         
         janusScreenShareStreamPeer.onicecandidate = (e) => {
           if (!e.candidate) return;
@@ -274,7 +389,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         try {
           let sdp = await janusScreenShareStreamPeer.createOffer();
-          await janusScreenShareStreamPeer.setLocalDescription(sdp);
+          await janusScreenShareStreamPeer.setLocalDescription(new RTCSessionDescription(sdp));
    
           janusScreenShareStreamPeer.onicegatheringstatechange = async (ev) => {
             let connection = ev.target;
@@ -323,6 +438,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 remoteVideo.remove();
               }
           } else if ((janusScreenShareStreamPeer && janusScreenShareStreamPeer.iceConnectionState === 'connected')) {
+            shareBtn.disabled = true;
+
             setScreenVideo(janusScreenShareStream);
           }
         }
@@ -335,6 +452,7 @@ document.addEventListener('DOMContentLoaded', function() {
       let isVideo = document.getElementById('screen-share-video');
    
       if (isVideo) {
+        // if (isVideo.hasChildNodes('video')) return;
         let video = document.createElement('video');
         console.log('@@@@@@@@@@@@', stream)
         console.log('video',video)
@@ -343,9 +461,9 @@ document.addEventListener('DOMContentLoaded', function() {
         video.style.height='450px';
         video.autoplay = true;
    
-        if(stream) {
+        // if(stream) {
           video.srcObject = stream;
-        }
+        // }
         isVideo.appendChild(video);
       }
    
@@ -395,7 +513,7 @@ document.addEventListener('DOMContentLoaded', function() {
         multiVideoBox.appendChild(videoContainner);
    
    
-        janusLocalStreamPeer = new RTCPeerConnection(configuration);
+        janusLocalStreamPeer = new RTCPeerConnection();
         janusLocalStream.getTracks().forEach(track => {
           janusLocalStreamPeer.addTrack(track, janusLocalStream);
         });
@@ -406,7 +524,7 @@ document.addEventListener('DOMContentLoaded', function() {
           await janusLocalStreamPeer.setLocalDescription(sdp);
           janusLocalStreamPeer.onicegatheringstatechange = async (ev) => {
             let connection = ev.target;
-   
+            console.log('----------------------------------------', connection.iceGatheringState);
             switch (connection.iceGatheringState) {
               case 'gathering':
                 break;
@@ -437,6 +555,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
    
       } catch (err) {
+        console.log(err);
         tLogBox('err', err);
       }
     }
@@ -446,11 +565,11 @@ document.addEventListener('DOMContentLoaded', function() {
       let multiVideoBox = document.querySelector('#VIDEOONETOMANY');
       try {
         let displayId = data.displayId;
-        janusRemoteStreamPeers[displayId] = new RTCPeerConnection(configuration);
+        janusRemoteStreamPeers[displayId] = new RTCPeerConnection();
    
-        janusRemoteStreamPeers[displayId].ontrack = function (e) {
+        janusRemoteStreamPeers[displayId].onaddstream = function (e) {
           console.log(e.stream)
-          janusRemoteStreams[displayId] = e.streams[0];
+          janusRemoteStreams[displayId] = e.stream;
           streamSize = Object.keys(janusRemoteStreams).length;
           let videoTagClassName;
           if (streamSize > 0 && streamSize <= 4) {
@@ -472,27 +591,62 @@ document.addEventListener('DOMContentLoaded', function() {
             multiVideoBox.appendChild(videoContainner);
           }
         }
+
+        // janusRemoteStreamPeers[displayId].ontrack = function (e) {
+        //   console.log(e.streams[0])
+        //   janusRemoteStreams[displayId] = e.streams[0];
+        //   streamSize = Object.keys(janusRemoteStreams).length;
+        //   let videoTagClassName;
+        //   if (streamSize > 0 && streamSize <= 4) {
+        //     videoTagClassName = 'video-twobytwo';
+        //   } 
+   
+        //   let videoContainner = document.createElement('dd');
+        //   videoContainner.classList = 'multi-video';
+   
+        //   if(!document.getElementById('multiVideo-' + data.displayId)){
+
+        //     let multiVideo = document.createElement('video');
+        //     multiVideo.autoplay = true;
+        //     multiVideo.srcObject = janusRemoteStreams[displayId];
+        //     multiVideo.id = 'multiVideo-' + data.displayId;
+     
+        //     videoContainner.appendChild(multiVideo);
+        //     multiVideoBox.classList = videoTagClassName;
+        //     multiVideoBox.appendChild(videoContainner);
+        //   }
+        // }
    
    
         await janusRemoteStreamPeers[displayId].setRemoteDescription(new RTCSessionDescription(data.sdp));
         let answerSdp = await janusRemoteStreamPeers[displayId].createAnswer();
         await janusRemoteStreamPeers[displayId].setLocalDescription(answerSdp);
-   
-        let sdpData = {
-          eventOp: 'SDP',
-          reqNo: reqNo++,
-          userId: inputId.value,
-          reqDate: nowDate(),
-          sdp: answerSdp,
-          roomId: data.roomId,
-          useMediaSvr: 'Y',
-          usage: 'cam',
-          isSfu: true,
-          pluginId: data.pluginId
-        };
-   
-        tLogBox('#### answerSdp SEND ###', sdpData);
-        signalSocketIo.emit('knowledgetalk', sdpData);
+
+        janusRemoteStreamPeers[displayId].onicegatheringstatechange = async (ev) => {
+          let connection = ev.target;
+            console.log(connection.iceGatheringState)
+            switch (connection.iceGatheringState) {
+              case 'gathering':
+                break;
+              case 'complete':
+                let sdpData = {
+                  eventOp: 'SDP',
+                  reqNo: reqNo++,
+                  userId: inputId.value,
+                  reqDate: nowDate(),
+                  sdp: connection.localDescription,
+                  roomId: data.roomId,
+                  useMediaSvr: 'Y',
+                  usage: 'cam',
+                  isSfu: true,
+                  pluginId: data.pluginId
+                };
+           
+                tLogBox('#### answerSdp SEND ###', sdpData);
+                signalSocketIo.emit('knowledgetalk', sdpData);
+                break;
+            }
+          }
    
       } catch (err) {
         tLogBox(err)
@@ -594,10 +748,58 @@ document.addEventListener('DOMContentLoaded', function() {
     });
    
     exitBtn.addEventListener('click', function (e) {
-      loginBtn.disabled = false;
-      callBtn.disabled = true;
+      loginBtn.disabled = true;
+      callBtn.disabled = false;
       joinBtn.disabled = true;
       exitBtn.disabled = true;
+      shareBtn.disabled = true;
+
+      if(janusLocalStream && janusLocalStream.getTracks()) {
+        janusLocalStream.getTracks()[0].stop();
+        janusLocalStream.getTracks()[1].stop();
+        janusLocalStream = null;
+      }
+
+      if (janusLocalStreamPeer) {
+        janusLocalStreamPeer.close();
+        janusLocalStreamPeer = null;
+      }
+
+      if (Object.keys(janusRemoteStreams).length) {
+        for (let i in janusRemoteStreams) {
+          if(janusRemoteStreams[i] && janusRemoteStreams[i].getTracks()) {
+            janusRemoteStreams[i].getTracks()[0].stop();
+            janusRemoteStreams[i].getTracks()[1].stop();
+            janusRemoteStreams[i] = null;
+          }
+        }
+
+        janusRemoteStreams = {};
+      }
+
+      if (Object.keys(janusRemoteStreamPeers).length) {
+        for (let i in janusRemoteStreamPeers) {
+          janusRemoteStreamPeers[i].close();
+        }
+  
+        janusRemoteStreamPeers = {};
+      }
+
+      if(janusScreenShareStream && janusScreenShareStream.getTracks()) {
+        janusScreenShareStream.getTracks()[0].stop();
+        janusScreenShareStream = null;
+      }
+
+      if (janusScreenShareStreamPeer) {
+        janusScreenShareStreamPeer.close();
+        janusScreenShareStreamPeer = null;
+      }
+
+      let shareVideoDiv = document.getElementById('screen-share-video');
+      while (shareVideoDiv.hasChildNodes('video')) {
+        shareVideoDiv.removeChild(shareVideoDiv.firstChild);
+      }
+      
  
       let sendData = {
         eventOp: 'ExitRoom',

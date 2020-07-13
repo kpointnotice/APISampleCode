@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let roomId;
     let configuration;
    
-   
+    //로그인 버튼 클릭시 이벤트
     loginBtn.addEventListener('click', function(e) {
       let loginData = {
         eventOp: 'Login',
@@ -28,7 +28,7 @@ document.addEventListener('DOMContentLoaded', function() {
       };
    
       try {
-        console.log('send', loginData);
+        tLogBox('send', loginData);
         signalSocketIo.emit('knowledgetalk', loginData);
       } catch (err) {
         if (err instanceof SyntaxError) {
@@ -39,6 +39,7 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     });
    
+    //전화 걸기 버튼 클릭시 이벤트
     callBtn.addEventListener('click', function(e) {
       let callData = {
         eventOp: 'Call',
@@ -51,7 +52,7 @@ document.addEventListener('DOMContentLoaded', function() {
       };
    
       try {
-        console.log('send', callData);
+        tLogBox('send', callData);
         signalSocketIo.emit('knowledgetalk', callData);
       } catch (err) {
         if (err instanceof SyntaxError) {
@@ -62,9 +63,12 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     });
    
+    //파일 공유시 이벤트
     docShare.addEventListener('change', function(e) {
       let i;
       for (i = 0; i < this.files.length; i++) {
+
+        //여기 fileObj 확인
         fileObj = this.files[i];
    
         let reader = new FileReader();
@@ -105,7 +109,7 @@ document.addEventListener('DOMContentLoaded', function() {
             };
    
             try {
-              console.log('send', fileData);
+              tLogBox('send', fileData);
               signalSocketIo.emit('knowledgetalk', fileData);
             } catch (err) {
               if (err instanceof SyntaxError) {
@@ -134,7 +138,7 @@ document.addEventListener('DOMContentLoaded', function() {
           };
    
           try {
-            console.log('send', fileData);
+            tLogBox('send', fileData);
             signalSocketIo.emit('knowledgetalk', fileData);
           } catch (err) {
             if (err instanceof SyntaxError) {
@@ -149,11 +153,12 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     });
    
+    //시그널 서버에서 받고 처리 이벤트 
     signalSocketIo.on('knowledgetalk', function(data) {
-      console.log('receive', data);
+      tLogBox('receive', data);
    
       if (!data.eventOp && !data.signalOp) {
-        console.log('error', 'eventOp undefined');
+        tLogBox('error', 'eventOp undefined');
       }
       
       if(data.eventOp === 'Login' && data.code === '200'){
@@ -186,7 +191,7 @@ document.addEventListener('DOMContentLoaded', function() {
    
       if (data.eventOp === 'SDP') {
         if (data.sdp.type === 'offer') {
-          console.log('sdp offer :: ', data)
+          tLogBox('sdp offer :: ', data)
           roomId = data.roomId;
           peerCon = new RTCPeerConnection(configuration);
    
@@ -210,7 +215,7 @@ document.addEventListener('DOMContentLoaded', function() {
             };
    
             try {
-              console.log('send', ansData);
+              tLogBox('send', ansData);
               signalSocketIo.emit('knowledgetalk', ansData);
             } catch (err) {
               if (err instanceof SyntaxError) {
@@ -249,7 +254,7 @@ document.addEventListener('DOMContentLoaded', function() {
         };
    
         try {
-          console.log('send', iceData);
+          tLogBox('send', iceData);
           signalSocketIo.emit('knowledgetalk', iceData);
         } catch (err) {
           if (err instanceof SyntaxError) {
@@ -275,7 +280,7 @@ document.addEventListener('DOMContentLoaded', function() {
       };
    
       try {
-        console.log('send', iceData);
+        tLogBox('send', iceData);
         signalSocketIo.emit('knowledgetalk', iceData);
       } catch (err) {
         if (err instanceof SyntaxError) {

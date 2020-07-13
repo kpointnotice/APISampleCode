@@ -35,7 +35,27 @@ document.addEventListener('DOMContentLoaded', function() {
       }
       
       if (data.eventOp === 'Call' && data.code !== '200'){
-        tTextbox('상대방이 로그인 되어 있지 않습니다.')
+        tTextbox('상대방이 로그인 되어 있지 않습니다.');
+        roomId = data.roomId;
+        let sendData = {
+          eventOp: 'ExitRoom',
+          reqNo: reqNo++,
+          userId: inputId.value,
+          userName : inputId.value,
+          reqDate: nowDate(),
+          roomId: roomId
+        };
+        try {
+          console.log('send', sendData);
+          signalSocketIo.emit('knowledgetalk', sendData);
+  
+        } catch (err) {
+          if (err instanceof SyntaxError) {
+            alert(' there was a syntaxError it and try again : ' + err.message);
+          } else {
+            throw err;
+          }
+        }
       } else if (data.eventOp === 'Call') {
         tTextbox('전화 연결중입니다...')
         callBtn.disabled = true;
@@ -51,6 +71,66 @@ document.addEventListener('DOMContentLoaded', function() {
         whiteboardBtn.disabled = false;
         whiteboardClearBtn.disabled = false;
         tTextbox('통화 연결이 되었습니다.')
+
+        blackPen.disabled = false;
+        redPen.disabled = false;
+        bluePen.disabled = false;
+
+        blackPen.addEventListener('click', e => {
+          tTextbox('검정색을 선택하셨습니다.')
+          blackPen.disabled = true;
+          redPen.disabled = false;
+          bluePen.disabled = false;
+      
+          context.strokeStyle = 'black';
+      
+          let colorData = {
+            signalOp:	"Color",
+            reqNo:	"1234567",
+            color:	"#000000"
+          }
+      
+          signalSocketIo.emit('knowledgetalk', colorData);
+          tLogBox('knowledgetalk', colorData);
+      
+        })
+      
+        redPen.addEventListener('click', e => {
+          tTextbox('빨간색을 선택하셨습니다.')
+          blackPen.disabled = false;
+          redPen.disabled = true;
+          bluePen.disabled = false;
+          context.strokeStyle = 'red';
+      
+          let colorData = {
+            signalOp:	"Color",
+            reqNo:	"1234567",
+            color:	"#ff0000"
+          }
+      
+          signalSocketIo.emit('knowledgetalk', colorData);
+          tLogBox('knowledgetalk', colorData);
+        })
+      
+        bluePen.addEventListener('click', e => {
+          tTextbox('파란색을 선택하셨습니다.')
+          blackPen.disabled = false;
+          redPen.disabled = false;
+          bluePen.disabled = true
+          context.strokeStyle = 'blue';
+      
+          let colorData = {
+            signalOp:	"Color",
+            reqNo:	"1234567",
+            color:	"#0000ff"
+          }
+      
+          signalSocketIo.emit('knowledgetalk', colorData);
+          tLogBox('knowledgetalk', colorData);
+      
+        })
+
+
       }
 
       if (data.eventOp === 'SDP') {
@@ -117,11 +197,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
       }
 
-
-
-
-
-   
       if (data.eventOp === 'Candidate') {
         if (!data.candidate) return;
         peerCon.addIceCandidate(new RTCIceCandidate(data.candidate));
@@ -222,34 +297,11 @@ document.addEventListener('DOMContentLoaded', function() {
     });
    
     whiteboardBtn.addEventListener('click', function(e) {
+      whiteboardBtn.disabled = true
       tTextbox('화이트 보드가 활성화 되었습니다.')
       if (whiteboard.style.display === 'none') {
         whiteboard.style.display = 'inline-block';
         setPen();
-      } else {
-        context.clearRect(0, 0, whiteboard.width, whiteboard.height);
-        whiteboard.style.display = 'none';
-        
-        console.log('확인 roomID', roomId)
-        console.log('확인222 roomID', this.roomId)
-        let wbeData = {
-          eventOp: 'WhiteBoardEnd',
-          reqNo: reqNo++,
-          roomId,
-          reqDate: nowDate(),
-          userId: inputId.value
-        };
-   
-        try {
-          console.log('send', wbeData);
-          signalSocketIo.emit('knowledgetalk', wbeData);
-        } catch (err) {
-          if (err instanceof SyntaxError) {
-            alert(' there was a syntaxError it and try again : ' + err.message);
-          } else {
-            throw err;
-          }
-        }
       }
     });
    
@@ -311,61 +363,6 @@ document.addEventListener('DOMContentLoaded', function() {
         context.closePath();
       });
     }
-
-    blackPen.addEventListener('click', e => {
-      tTextbox('검정색을 선택하셨습니다.')
-      blackPen.disabled = true;
-      redPen.disabled = false;
-      bluePen.disabled = false;
-  
-      context.strokeStyle = 'black';
-  
-      let colorData = {
-        signalOp:	"Color",
-        reqNo:	"1234567",
-        color:	"#000000"
-      }
-  
-      signalSocketIo.emit('knowledgetalk', colorData);
-      tLogBox('knowledgetalk', colorData);
-  
-    })
-  
-    redPen.addEventListener('click', e => {
-      tTextbox('빨간색을 선택하셨습니다.')
-      blackPen.disabled = false;
-      redPen.disabled = true;
-      bluePen.disabled = false;
-      context.strokeStyle = 'red';
-  
-      let colorData = {
-        signalOp:	"Color",
-        reqNo:	"1234567",
-        color:	"#ff0000"
-      }
-  
-      signalSocketIo.emit('knowledgetalk', colorData);
-      tLogBox('knowledgetalk', colorData);
-    })
-  
-    bluePen.addEventListener('click', e => {
-      tTextbox('파란색을 선택하셨습니다.')
-      blackPen.disabled = false;
-      redPen.disabled = false;
-      bluePen.disabled = true
-      context.strokeStyle = 'blue';
-  
-      let colorData = {
-        signalOp:	"Color",
-        reqNo:	"1234567",
-        color:	"#0000ff"
-      }
-  
-      signalSocketIo.emit('knowledgetalk', colorData);
-      tLogBox('knowledgetalk', colorData);
-  
-    })
-
    
     function setPen() {
       context.globalCompositeOperation = 'source-over';

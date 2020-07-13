@@ -8,9 +8,10 @@
     <title>전화걸기</title>
 </head>
 <body>
-    <fieldset style="height: 130px; width: 100% ; margin: 0; padding: 1px;">
-        <legend style="margin : 0; padding : 0">정보 입력</legend>
+    <!-- <fieldset style="height: 130px; width: 100% ; margin: 0; padding: 1px;">
+        <legend style="margin : 0; padding : 0">정보 입력</legend> -->
         <!-- <div style= "height: 100px; width: 250px; border:1px solid gold;" > -->
+    <div class="titlebox">
         <div class='login'>
             id : <input id='inputid' value='apple' /> <br />
             pw : <input id='inputpw' type='password' value='apple' /> <br />
@@ -19,13 +20,14 @@
             <button id='callBtn' disabled>전화걸기</button>
             <button id='exitBtn' disabled>통화종료</button>
         </div>
-    </fieldset>
+    </div>
+    <!-- </fieldset> -->
 
     <div class='login_message'>
         <div id='text_print_Box'></div>
     </div>
 
-    <input type='text' id='message' disabled>
+    <input type='text' id='message' disabled >
     <button id='chatBtn' disabled>채팅송신</button><br/>
     <div id='chat_Box'></div>
 

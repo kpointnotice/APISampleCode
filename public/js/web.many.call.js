@@ -50,7 +50,7 @@ document.addEventListener('DOMContentLoaded', function () {
       userId: inputId.value,
       reqDate: nowDate(),
       reqDeviceType: 'pc',
-      targetId: ['apple', 'melon', 'orange'],
+      targetId: ['t111','101010', '202020', 'orange'],
     };
 
     try {
@@ -305,6 +305,14 @@ document.addEventListener('DOMContentLoaded', function () {
       localStream.getTracks()[0].stop();
       localStream.getTracks()[1].stop();
       localStream = null;
+
+      //노정일 여기 추가하였습니다.
+      // peerCon.close();
+      // peerCon = null;
+
+      // localVideo.srcObject = null;
+      // remoteVideo.srcObject = null;
+      
     }
     if (multiVideo) multiVideo.srcObject = null;
 
@@ -368,17 +376,40 @@ document.addEventListener('DOMContentLoaded', function () {
         break;
 
       case 'Call':
-        roomId = data.roomId;
-        exitBtn.disabled = false;
-        loginBtn.disabled = true;
-        tTextbox('회의에 초대 요청 중입니다. \n 잠시만 기다려주세요...');
-        if (data.code !== '200') {
-          console.log('Call err : ', data);
-        } else if (data.status === 'accept') {
-          if (data.isSfu === true) {
-            createSDPOffer(data.videoWidth / 2, data.videoHeight / 2, data.videoFramerate, roomId);
-          } else {
-
+        if(data.eventOp === 'Call' && data.code === '200'){
+          roomId = data.roomId;
+          exitBtn.disabled = false;
+          loginBtn.disabled = true;
+          tTextbox('회의 초대 요청 중입니다.');
+        if (data.status === 'accept') {
+            if (data.isSfu === true) {
+              createSDPOffer(data.videoWidth / 2, data.videoHeight / 2, data.videoFramerate, roomId)
+            }
+          }
+        }
+        if(data.eventOp === 'Call' && data.code === '424'){
+          tTextbox('상대방이 로그인 되어 있지 않습니다.');
+          
+          roomId = data.roomId;
+          let sendData = {
+            eventOp: 'ExitRoom',
+            reqNo: reqNo++,
+            userId: inputId.value,
+            userName: inputId.value,
+            reqDate: nowDate(),
+            roomId: roomId
+          };
+          try {
+            tLogBox('send', sendData);
+            console.log('send', sendData);
+            signalSocketIo.emit('knowledgetalk', sendData);
+            dispose();
+          } catch (err) {
+            if (err instanceof SyntaxError) {
+              alert(' there was a syntaxError it and try again : ' + err.message);
+            } else {
+              throw err;
+            }
           }
         }
         break;
@@ -400,6 +431,10 @@ document.addEventListener('DOMContentLoaded', function () {
         break;
 
       case 'SDP':
+        if (data.eventOp === 'SDP' && data.code ==='200'){
+          callBtn.disabled = true;
+        }
+        //??
         if (data.sdp && data.sdp.type === 'offer' && data.usage === 'cam') {
           createSDPAnwser(data);
         } else if (data.sdp && data.sdp.type === 'answer' && data.usage === 'cam') {
@@ -414,6 +449,9 @@ document.addEventListener('DOMContentLoaded', function () {
           joinBtn.disabled = true;
           dispose();
         }
+        // if (data.action === 'exit'){
+        //   tTextbox('한분이 나갔습니다.')
+        // }
         if (data.action === 'join') {
           tTextbox('회의를 시작 하셔도 됩니다.')
         } 

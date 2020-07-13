@@ -90,6 +90,32 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
+    //채팅 작성 엔터 이벤트
+    message.addEventListener('keydown', function (e) {
+        if(event.keyCode == 13){
+            let chatData = {
+                signalOp: 'Chat',
+                userId: inputId.value,
+                message: message.value
+            }
+
+            try {
+                tLogBox('send', chatData);
+                console.log('send', chatData);
+                chatTextBox(chatData.userId + ' : ' + chatData.message)                
+                signalSocketIo.emit('knowledgetalk', chatData);
+                var el = document.getElementById('message');
+                el.value = '';
+            } catch (err) {
+                if (err instanceof SyntaxError) {
+                    alert(' there was a syntaxError it and try again : ' + err.message);
+                } else {
+                    throw err;
+                }
+            }
+        }
+    });
+
     chatBtn.addEventListener('click', function (e) {
         let chatData = {
             signalOp: 'Chat',
@@ -102,8 +128,8 @@ document.addEventListener('DOMContentLoaded', function () {
             console.log('send', chatData);
             chatTextBox(chatData.userId + ' : ' + chatData.message)
             signalSocketIo.emit('knowledgetalk', chatData);
-            // let input = document.getElementById(message);
-            // input.value = null;
+            var el = document.getElementById('message');
+            el.value = '';
         } catch (err) {
             if (err instanceof SyntaxError) {
                 alert(' there was a syntaxError it and try again : ' + err.message);
@@ -140,7 +166,27 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
         if (data.eventOp === 'Call' && data.code !== '200') {
-            tTextbox('상대방이 로그인 되어 있지 않습니다.')
+            roomId = data.roomId;
+            let sendData = {
+            eventOp: 'ExitRoom',
+            reqNo: reqNo++,
+            userId: inputId.value,
+            userName : inputId.value,
+            reqDate: nowDate(),
+            roomId: roomId
+            };
+            try {
+            console.log('send', sendData);
+            signalSocketIo.emit('knowledgetalk', sendData);
+            tTextbox('상대방이 로그인 되어 있지 않습니다.');
+            } catch (err) {
+            if (err instanceof SyntaxError) {
+                alert(' there was a syntaxError it and try again : ' + err.message);
+            } else {
+                throw err;
+            }
+            }
+            
         }
         
         //전화 걸기 됐을때 이벤트
@@ -149,15 +195,16 @@ document.addEventListener('DOMContentLoaded', function () {
             message.disabled = false;
             chatBtn.disabled = false;
             exitBtn.disabled = false;
-            tTextbox('통화가 연결되었습니다. 자유롭게 채팅을 이용하세요.');
+            tTextbox('통화가 연결되었습니다.');
         }
 
         if (data.signalOp === 'Chat') {
             chatTextBox( data.userId + ' : ' + data.message)
         }
 
-        if (data.signalOp ==='Presence' && data.action ==='exit'){
-            console.log('확인용',data)
+        if (data.signalOp ==='Presence' && (data.action ==='exit' || data.action ==='end')){
+            //종료시 글 내용 삭제이벤트
+            document.getElementById('chat_Box').innerHTML = ""
         }
         
         //방장 내가 통화 종료를 클릭시 이벤트 
@@ -167,10 +214,13 @@ document.addEventListener('DOMContentLoaded', function () {
             exitBtn.disabled = true;
             message.disabled = true;
             chatBtn.disabled = true;
-            tTextbox('통화가 종료 되었습니다 \n 다시 통화를 원하시면 통화 걸기를 눌러주세요.')
+
+            //종료시 글 내용 삭제이벤트
+            document.getElementById('chat_Box').innerHTML = ""
+            tTextbox('통화가 종료 되었습니다')
         }
         //상대방이 나갔을경우 이벤트
-        if (data.signalOp === 'Presence' && data.action === 'exit'){
+        if (data.signalOp === 'Presence' && (data.action === 'exit' || data.action ==='end')){
             callBtn.disabled = false;
             
             let callEndData = {
@@ -197,7 +247,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     throw err;
                 }
             }
-            tTextbox('상대방이 통화를 종료 하였습니다.');
+            tTextbox('통화가 종료 되었습니다.');
         }
 
     });

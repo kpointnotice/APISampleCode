@@ -22,8 +22,8 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     });
    
-   
     loginBtn.addEventListener('click', function (e) {
+      
       let signupData = {
         eventOp: 'SignUp',
         reqNo: reqNo++,

@@ -12,6 +12,9 @@ document.addEventListener('DOMContentLoaded', function () {
     let janustoPeer;
   
     signalSocketIo.on('knowledgetalk', function (data) {
+
+      console.log('roomId ::::::::::',data.roomId)
+
       tLogBox('receive', data);
       console.log('receive', data);
       if (!data.eventOp && !data.signalOp) {
@@ -26,7 +29,8 @@ document.addEventListener('DOMContentLoaded', function () {
       }
 
       if(data.signalOp === 'Presence' && data.action === 'join'){
-        tTextbox(data.userId+'님이 입장 하셨습니다. 회의를 시작하셔도 됩니다.')
+        tTextbox('회의방이 만들어 졌습니다. \n 회의를 하셔도 됩니다.')
+        // tTextbox(data.userId+'님이 입장 하셨습니다. 회의를 시작하셔도 됩니다.')
         callBtn.disabled = true;
         memberBtn.disabled = false;
       }
@@ -35,7 +39,7 @@ document.addEventListener('DOMContentLoaded', function () {
         roomId = data.roomId;
         callBtn.disabled = true;
         joinBtn.disabled = false;
-        memberBtn.disabled = false;
+        memberBtn.disabled = true;
         tTextbox(data.userId +' 님이 회의 초대 요청이 왔습니다.');
       }
   
@@ -44,11 +48,12 @@ document.addEventListener('DOMContentLoaded', function () {
         exitBtn.disabled = false;
         tTextbox('회의에 초대 하였습니다');
       }
-      if (data.eventOp === 'Join') {
+      if (data.eventOp === 'Join' && data.code ==='200') {
         roomId = data.roomId;
         joinBtn.disabled = true;
         exitBtn.disabled = false;
-        tTextbox('회의에 입장 하였습니다');
+        memberBtn.disabled = false;
+        tTextbox('회의방이 만들어 졌습니다. \n 회의를 하셔도 됩니다.')
       }
   
       if (data.eventOp === 'SDP') {
@@ -97,16 +102,49 @@ document.addEventListener('DOMContentLoaded', function () {
         })
         memberlist.appendChild(ui);
       }
+
+      //상대방이 회의실 나갔을 경우 이벤트
+      if(data.signalOp === 'Presence' && (data.action === 'exit' || data.action === 'end')){
+        tTextbox('회의를 종료 합니다.');
+        callBtn.disabled = false;
+        exitBtn.disabled = true;
+        memberBtn.disabled = true;
+        loginBtn.disabled = true;
+        let callEndData = {
+          eventOp: 'ExitRoom',
+          reqNo: reqNo,
+          userId: inputId.value,
+          reqDate: nowDate(),
+          roomId
+        };
+
+        try {
+          tLogBox('send', callEndData);
+          signalSocketIo.emit('knowledgetalk', callEndData);
+        } catch (err) {
+          if (err instanceof SyntaxError) {
+            alert('there was a syntaxError it and try again:' + err.message);
+          } else {
+            throw err;
+          }
+        }
+      }
+
+      //상대방이 초대중에 회의 종료시 이벤트
+      if(data.eventOp === 'ExitRoom' && data.code === '561'){
+        joinBtn.disabled = true;
+      }
+      
     });
   
-  
-    function dispose() {
-      if (janustoPeer) {
-        janustoPeer.dispose();
-        janustoPeer = null;
-        multiVideo.src = null;
-      }
-    }
+    // 해당 지우려고 넣었는데 로그아웃으로 진행 하였음
+    // function dispose() {
+    //   if (janustoPeer) {
+    //     janustoPeer.dispose();
+    //     janustoPeer = null;
+    //     multiVideo.src = null;
+    //   }
+    // }
     
     //로그인 버튼 클릭시
     loginBtn.addEventListener('click', function (e) {
@@ -149,6 +187,7 @@ document.addEventListener('DOMContentLoaded', function () {
         console.log('send', callData);
         tTextbox(callData.targetId[0]+'님을 초대 중입니다.')
         signalSocketIo.emit('knowledgetalk', callData);
+
       } catch (err) {
         if (err instanceof SyntaxError) {
           alert(' there was a syntaxError it and try again : ' + err.message);
@@ -184,24 +223,25 @@ document.addEventListener('DOMContentLoaded', function () {
   
     //회의 종료 버튼
     exitBtn.addEventListener('click', function (e) {
-      loginBtn.disabled = false;
-      callBtn.disabled = true;
+      loginBtn.disabled = true;
+      callBtn.disabled = false;
       joinBtn.disabled = true;
       exitBtn.disabled = true;
       memberBtn.disabled = true;
       // dispose();
       tTextbox('회의를 종료 합니다.');
 
-      let logoutData = {
-        eventOp: 'Logout',
-        reqNo: reqNo++,
+      let callEndData = {
+        eventOp: 'ExitRoom',
+        reqNo: reqNo,
         userId: inputId.value,
-        reqDate: nowDate()
+        reqDate: nowDate(),
+        roomId
       };
+
       try {
-        tLogBox('send', logoutData);
-        console.log('send', logoutData);
-        signalSocketIo.emit('knowledgetalk', logoutData);
+        tLogBox('send', callEndData);
+        signalSocketIo.emit('knowledgetalk', callEndData);
       } catch (err) {
         if (err instanceof SyntaxError) {
             alert('there was a syntaxError it and try again:' + err.message);
@@ -209,6 +249,31 @@ document.addEventListener('DOMContentLoaded', function () {
             throw err;
         }
       }
+      // loginBtn.disabled = false;
+      // callBtn.disabled = true;
+      // joinBtn.disabled = true;
+      // exitBtn.disabled = true;
+      // memberBtn.disabled = true;
+      // // dispose();
+      // tTextbox('회의를 종료 합니다.');
+
+      // let logoutData = {
+      //   eventOp: 'Logout',
+      //   reqNo: reqNo++,
+      //   userId: inputId.value,
+      //   reqDate: nowDate()
+      // };
+      // try {
+      //   tLogBox('send', logoutData);
+      //   console.log('send', logoutData);
+      //   signalSocketIo.emit('knowledgetalk', logoutData);
+      // } catch (err) {
+      //   if (err instanceof SyntaxError) {
+      //       alert('there was a syntaxError it and try again:' + err.message);
+      //   } else {
+      //       throw err;
+      //   }
+      // }
     });
   
     // 참여 확인 버튼 
