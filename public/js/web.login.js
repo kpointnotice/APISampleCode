@@ -19,7 +19,7 @@ loginBtn.addEventListener('click', function (e) {
         signalSocketIo.emit('knowledgetalk', loginData);
     } catch (err) {
         if (err instanceof SyntaxError) {
-            console.log(' there was a syntaxError it and try again : ' + err.message);
+            tLogBox(' there was a syntaxError it and try again : ' + err.message);
         } else {
             throw err;
         }
@@ -27,14 +27,12 @@ loginBtn.addEventListener('click', function (e) {
 });
  
 signalSocketIo.on('knowledgetalk', function (data) {
-    //tLogBox 로그 출력 
     tLogBox('receive', data);
     if (!data.eventOp && !data.signalOp) { 
-    console.log('error', 'eventOp undefined');
+        tLogBox('error', 'eventOp undefined');
     }
 
     if(data.code === '200'){
-        //tTextbox 텍스트 출력
         tTextbox('로그인 되었습니다.')
         loginBtn.disabled = true
     } else if(data.code === '111'){

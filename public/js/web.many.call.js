@@ -32,7 +32,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
     try {
       tLogBox('send', loginData);
-      console.log('send', loginData);
       signalSocketIo.emit('knowledgetalk', loginData);
     } catch (err) {
       if (err instanceof SyntaxError) {
@@ -55,7 +54,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
     try {
       tLogBox('send', callData);
-      console.log('send', callData);
       signalSocketIo.emit('knowledgetalk', callData);
     } catch (err) {
       if (err instanceof SyntaxError) {
@@ -79,7 +77,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
     try {
       tLogBox('send', joinData);
-      console.log('send', joinData);
       signalSocketIo.emit('knowledgetalk', joinData);
     } catch (err) {
       if (err instanceof SyntaxError) {
@@ -106,7 +103,6 @@ document.addEventListener('DOMContentLoaded', function () {
     };
     try {
       tLogBox('send', sendData);
-      console.log('send', sendData);
       signalSocketIo.emit('knowledgetalk', sendData);
       dispose();
     } catch (err) {
@@ -183,7 +179,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 usage: 'cam',
                 isSfu: true
               };
-              console.log('send', sdpData);
+              tLogBox('send', sdpData);
               signalSocketIo.emit('knowledgetalk', sdpData);
               break;
           }
@@ -191,7 +187,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
       } catch (error) {
         if (err instanceof SyntaxError) {
-          console.error(' there was a syntaxError it and try again : ' + err.message);
+          tLogBox(' there was a syntaxError it and try again : ' + err.message);
         } else {
           throw err;
         }
@@ -200,8 +196,6 @@ document.addEventListener('DOMContentLoaded', function () {
     } catch (err) {
       tLogBox('getUserMedia err', err);
       tLogBox('http 에서는 getUserMedia를 가지고 올 수 없습니다. https 에서 실행해주세요.');
-      console.log('getUserMedia err', err);
-      console.log('http 에서는 getUserMedia를 가지고 올 수 없습니다. https 에서 실행해주세요.');
     }
   }
 
@@ -241,7 +235,6 @@ document.addEventListener('DOMContentLoaded', function () {
         multiVideoBox.appendChild(videoContainner);
       }
 
-
       await janusRemoteStreamPeers[displayId].setRemoteDescription(new RTCSessionDescription(data.sdp));
       let answerSdp = await janusRemoteStreamPeers[displayId].createAnswer();
       await janusRemoteStreamPeers[displayId].setLocalDescription(answerSdp);
@@ -266,7 +259,6 @@ document.addEventListener('DOMContentLoaded', function () {
             };
 
             tLogBox('send', sdpData);
-            console.log('send', sdpData);
             signalSocketIo.emit('knowledgetalk', sdpData);
             break;
         }
@@ -277,7 +269,6 @@ document.addEventListener('DOMContentLoaded', function () {
         if ((janusRemoteStreamPeers[displayId] && janusRemoteStreamPeers[displayId].iceConnectionState === 'disconnected') ||
           (janusRemoteStreamPeers[displayId] && janusRemoteStreamPeers[displayId].iceConnectionState === 'failed') ||
           (janusRemoteStreamPeers[displayId] && janusRemoteStreamPeers[displayId].iceConnectionState === 'closed')) {
-          console.log('Disconnected.. ', displayId);
 
           janusRemoteStreamPeers[displayId].close();
           janusRemoteStreamPeers[displayId] = null;
@@ -293,7 +284,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
       };
     } catch (err) {
-      console.log(err)
+      tLogBox(err)
     }
   }
 
@@ -305,14 +296,6 @@ document.addEventListener('DOMContentLoaded', function () {
       localStream.getTracks()[0].stop();
       localStream.getTracks()[1].stop();
       localStream = null;
-
-      //노정일 여기 추가하였습니다.
-      // peerCon.close();
-      // peerCon = null;
-
-      // localVideo.srcObject = null;
-      // remoteVideo.srcObject = null;
-      
     }
     if (multiVideo) multiVideo.srcObject = null;
 
@@ -336,22 +319,19 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     tLogBox('janusRemoteStreamPeers : ', janusRemoteStreamPeers)
-    console.log('janusRemoteStreamPeers : ', janusRemoteStreamPeers)
     for (let key in janusRemoteStreamPeers) {
       janusRemoteStreamPeers[key].close();
       janusRemoteStreamPeers[key] = null;
-      console.log('deleted janusRemoteStreamPeers. ', key)
+      tLogBox('deleted janusRemoteStreamPeers. ', key)
       delete janusRemoteStreamPeers[key];
     }
   }
 
   signalSocketIo.on('knowledgetalk', function (data) {
     tLogBox('receive', data);
-    console.log('receive', data);
 
     if (!data.eventOp && !data.signalOp) {
       tLogBox('error', 'eventOp undefined');
-      console.log('error', 'eventOp undefined');
     }
 
     switch (data.eventOp || data.signalOp) {
@@ -381,13 +361,13 @@ document.addEventListener('DOMContentLoaded', function () {
           exitBtn.disabled = false;
           loginBtn.disabled = true;
           tTextbox('회의 초대 요청 중입니다.');
-        if (data.status === 'accept') {
+          if (data.status === 'accept') {
             if (data.isSfu === true) {
-              createSDPOffer(data.videoWidth / 2, data.videoHeight / 2, data.videoFramerate, roomId)
+              createSDPOffer(data.videoWidth / 2, data.videoHeight / 2, data.videoFramerate, roomId);
             }
           }
         }
-        if(data.eventOp === 'Call' && data.code === '424'){
+        if(data.eventOp === 'Call' && data.code !== '200'){
           tTextbox('상대방이 로그인 되어 있지 않습니다.');
           
           roomId = data.roomId;
@@ -401,7 +381,6 @@ document.addEventListener('DOMContentLoaded', function () {
           };
           try {
             tLogBox('send', sendData);
-            console.log('send', sendData);
             signalSocketIo.emit('knowledgetalk', sendData);
             dispose();
           } catch (err) {
@@ -422,7 +401,7 @@ document.addEventListener('DOMContentLoaded', function () {
         tTextbox('회의에 참여 하였습니다.');
 
         if (data.code !== '200') {
-          console.log('join err : ', data);
+          tLogBox('join err : ', data);
         } else {
           if (data.useMediaSvr === 'Y') {
             createSDPOffer(data.videoWidth, data.videoHeight, data.videoFramerate, roomId);
@@ -434,7 +413,6 @@ document.addEventListener('DOMContentLoaded', function () {
         if (data.eventOp === 'SDP' && data.code ==='200'){
           callBtn.disabled = true;
         }
-        //??
         if (data.sdp && data.sdp.type === 'offer' && data.usage === 'cam') {
           createSDPAnwser(data);
         } else if (data.sdp && data.sdp.type === 'answer' && data.usage === 'cam') {
@@ -449,9 +427,6 @@ document.addEventListener('DOMContentLoaded', function () {
           joinBtn.disabled = true;
           dispose();
         }
-        // if (data.action === 'exit'){
-        //   tTextbox('한분이 나갔습니다.')
-        // }
         if (data.action === 'join') {
           tTextbox('회의를 시작 하셔도 됩니다.')
         } 

@@ -13,13 +13,9 @@ document.addEventListener('DOMContentLoaded', function () {
   
     signalSocketIo.on('knowledgetalk', function (data) {
 
-      console.log('roomId ::::::::::',data.roomId)
-
       tLogBox('receive', data);
-      console.log('receive', data);
       if (!data.eventOp && !data.signalOp) {
         tLogBox('error', 'eventOp undefined');
-        console.log('error', 'eventOp undefined');
       }
   
       if (data.eventOp === 'Login') {
@@ -29,8 +25,7 @@ document.addEventListener('DOMContentLoaded', function () {
       }
 
       if(data.signalOp === 'Presence' && data.action === 'join'){
-        tTextbox('회의방이 만들어 졌습니다. \n 회의를 하셔도 됩니다.')
-        // tTextbox(data.userId+'님이 입장 하셨습니다. 회의를 시작하셔도 됩니다.')
+        tTextbox('회의를 시작하세요')
         callBtn.disabled = true;
         memberBtn.disabled = false;
       }
@@ -53,7 +48,7 @@ document.addEventListener('DOMContentLoaded', function () {
         joinBtn.disabled = true;
         exitBtn.disabled = false;
         memberBtn.disabled = false;
-        tTextbox('회의방이 만들어 졌습니다. \n 회의를 하셔도 됩니다.')
+        tTextbox('회의를 시작하세요.')
       }
   
       if (data.eventOp === 'SDP') {
@@ -78,7 +73,6 @@ document.addEventListener('DOMContentLoaded', function () {
   
         try {
           tLogBox('send', iceData);
-          console.log('send', iceData);
           signalSocketIo.emit('knowledgetalk', iceData);
         } catch (err) {
           if (err instanceof SyntaxError) {
@@ -92,7 +86,6 @@ document.addEventListener('DOMContentLoaded', function () {
       //참여자 확인
       if (data.eventOp === 'ConferenceMemberList') {
         tLogBox('receive(memberlist)', data.result);
-        console.log('receive(memberlist)', data.result);
         memberlist.innerHTML = null;
         var ui = document.createElement('ui');
         data.result.forEach(item => {
@@ -136,15 +129,6 @@ document.addEventListener('DOMContentLoaded', function () {
       }
       
     });
-  
-    // 해당 지우려고 넣었는데 로그아웃으로 진행 하였음
-    // function dispose() {
-    //   if (janustoPeer) {
-    //     janustoPeer.dispose();
-    //     janustoPeer = null;
-    //     multiVideo.src = null;
-    //   }
-    // }
     
     //로그인 버튼 클릭시
     loginBtn.addEventListener('click', function (e) {
@@ -159,7 +143,6 @@ document.addEventListener('DOMContentLoaded', function () {
   
       try {
         tLogBox('send', loginData);
-        console.log('send', loginData);
         signalSocketIo.emit('knowledgetalk', loginData);
       } catch (err) {
         if (err instanceof SyntaxError) {
@@ -184,7 +167,6 @@ document.addEventListener('DOMContentLoaded', function () {
   
       try {
         tLogBox('send', callData);
-        console.log('send', callData);
         tTextbox(callData.targetId[0]+'님을 초대 중입니다.')
         signalSocketIo.emit('knowledgetalk', callData);
 
@@ -210,7 +192,6 @@ document.addEventListener('DOMContentLoaded', function () {
   
       try {
         tLogBox('send', joinData);
-        console.log('send', joinData);
         signalSocketIo.emit('knowledgetalk', joinData);
       } catch (err) {
         if (err instanceof SyntaxError) {
@@ -228,7 +209,6 @@ document.addEventListener('DOMContentLoaded', function () {
       joinBtn.disabled = true;
       exitBtn.disabled = true;
       memberBtn.disabled = true;
-      // dispose();
       tTextbox('회의를 종료 합니다.');
 
       let callEndData = {
@@ -249,31 +229,6 @@ document.addEventListener('DOMContentLoaded', function () {
             throw err;
         }
       }
-      // loginBtn.disabled = false;
-      // callBtn.disabled = true;
-      // joinBtn.disabled = true;
-      // exitBtn.disabled = true;
-      // memberBtn.disabled = true;
-      // // dispose();
-      // tTextbox('회의를 종료 합니다.');
-
-      // let logoutData = {
-      //   eventOp: 'Logout',
-      //   reqNo: reqNo++,
-      //   userId: inputId.value,
-      //   reqDate: nowDate()
-      // };
-      // try {
-      //   tLogBox('send', logoutData);
-      //   console.log('send', logoutData);
-      //   signalSocketIo.emit('knowledgetalk', logoutData);
-      // } catch (err) {
-      //   if (err instanceof SyntaxError) {
-      //       alert('there was a syntaxError it and try again:' + err.message);
-      //   } else {
-      //       throw err;
-      //   }
-      // }
     });
   
     // 참여 확인 버튼 
@@ -286,7 +241,6 @@ document.addEventListener('DOMContentLoaded', function () {
       }
       try {
         tLogBox('send', memberData);
-        console.log('send', memberData);
         signalSocketIo.emit('knowledgetalk', memberData);
       } catch (err) {
         if (err instanceof SyntaxError) {

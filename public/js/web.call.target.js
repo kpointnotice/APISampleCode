@@ -24,7 +24,6 @@ document.addEventListener('DOMContentLoaded', function () {
         };
 
         try {
-            console.log('send(login)', loginData);
             tLogBox('send(login)', loginData);
             signalSocketIo.emit('knowledgetalk', loginData);
         } catch (err) {
@@ -47,7 +46,6 @@ document.addEventListener('DOMContentLoaded', function () {
         };
 
         try {
-            console.log('send(join)', joinData);
             tLogBox('send(join)', joinData);
             signalSocketIo.emit('knowledgetalk', joinData);
         } catch (err) {
@@ -82,7 +80,6 @@ document.addEventListener('DOMContentLoaded', function () {
         };
 
         try {
-            console.log('send', callEndData);
             tLogBox('send', callEndData);
             signalSocketIo.emit('knowledgetalk', callEndData);
             if (window.roomId) {
@@ -112,7 +109,6 @@ document.addEventListener('DOMContentLoaded', function () {
         };
 
         try {
-            console.log('send(onIceCandidateHandler)', iceData);
             tLogBox('send(onIceCandidateHandler)', iceData);
             signalSocketIo.emit('knowledgetalk', iceData);
         } catch (err) {
@@ -129,11 +125,9 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     signalSocketIo.on('knowledgetalk', function (data) {
-        console.log('receive', data);
         tLogBox('receive', data);
 
         if (!data.eventOp && !data.signalOp) {
-            console.log('error', 'eventOp undefined');
             tLogBox('error', 'eventOp undefined');
         }
 
@@ -194,7 +188,6 @@ document.addEventListener('DOMContentLoaded', function () {
                         };
 
                         try {
-                            console.log('send(offerdata)', sdpData);
                             tLogBox('send(offerdata)', sdpData);
                             signalSocketIo.emit('knowledgetalk', sdpData);
                         } catch (err) {
@@ -227,7 +220,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
             try {
                 tTextbox('전화 연결이 되었습니다.');
-                console.log('send(icedata)', iceData);
                 tLogBox('send(icedata)', iceData);
                 signalSocketIo.emit('knowledgetalk', iceData);
             } catch (err) {
@@ -254,13 +246,11 @@ document.addEventListener('DOMContentLoaded', function () {
             joinBtn.disabled = true;
             exitBtn.disabled = true;
 
-            // tTextbox(`${data.userId}님이 통화를 종료 하였습니다.`);
             tTextbox('통화 종료 되었습니다.');
         }
 
         //내가 통화 종료시 이벤트
         if(data.eventOp === 'ExitRoom' && data.code ==='200'){
-            // tTextbox(`${inputTarget.value}님이 통화를 종료 하였습니다.`);
             joinBtn.disabled = true;
             tTextbox('통화 종료 되었습니다.');
         }

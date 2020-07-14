@@ -10,7 +10,7 @@
 </head>
 
 <body>
-  <!-- <div style="height:100%; width:100%; border : 1px solid black; margin-top: 10px; "> -->
+  <div class="titlebox">
     <div class='login'>
       <input type='hidden' id='inputId' value='melon' /> <br />
       <input type='hidden' id='inputPw' type='password' value='melon' /> <br />
@@ -20,24 +20,24 @@
       <button id='exitBtn' disabled>회의종료</button>
       <button id='memberBtn' disabled>참여확인</button>
     </div>
-  <!-- </div> -->
+  </div>
 
   <!-- 결과 메시지 -->
-  <div class='login_message'>
-    <div id='text_print_Box'></div>
-  </div>
-
   <div class='message'>
-    참여자 확인
-    <div id='memberlist'></div>
-  </div>
+    <div id='text_print_Box'></div>
+    </div>
   
-  <!-- 로그 -->
-  <div id='printBox' class='printBox'></div>
+    <div class='message'>
+      참여자 확인
+      <div id='memberlist'></div>
+    </div>
+    
+    <!-- 로그 -->
+    <div id='printBox' class='printBox'></div>
 
   <!-- 시그널 주소 -->
   <script src='https://106.240.247.44:7101/socket.io/socket.io.js'></script>
   <script src='./lib/common.js'></script>
-  <script src='./js/web.call.list.target.js'></script>
+  <script src='js/web.call.list.target.js'></script>
 </body>
 </html>

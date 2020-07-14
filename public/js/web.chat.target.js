@@ -21,7 +21,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
         try {
             tLogBox('send(login)', loginData);
-            console.log('send(login)', loginData);
             signalSocketIo.emit('knowledgetalk', loginData);
         } catch (err) {
             if (err instanceof SyntaxError) {
@@ -44,7 +43,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
         try {
             tLogBox('send(join)', joinData);
-            console.log('send(join)', joinData);
             signalSocketIo.emit('knowledgetalk', joinData);
         } catch (err) {
             if (err instanceof SyntaxError) {
@@ -67,7 +65,6 @@ document.addEventListener('DOMContentLoaded', function () {
         try {
             loginBtn.disabled = true;
             tLogBox('send', callEndData);
-            console.log('send', callEndData);
             signalSocketIo.emit('knowledgetalk', callEndData);
             if (window.roomId) {
                 peerCon = new RTCPeerConnection(configuration);
@@ -94,11 +91,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
         try {
             tLogBox('send', chatData);
-            console.log('send', chatData);
             chatTextBox( chatData.userId + ' : ' + chatData.message)
             signalSocketIo.emit('knowledgetalk', chatData);
-            var el = document.getElementById('message');
-            el.value = '';
+            message.value = '';
         } catch (err) {
             if (err instanceof SyntaxError) {
                 alert(' there was a syntaxError it and try again : ' + err.message);
@@ -119,11 +114,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
             try {
                 tLogBox('send', chatData);
-                console.log('send', chatData);
                 chatTextBox(chatData.userId + ' : ' + chatData.message)
                 signalSocketIo.emit('knowledgetalk', chatData);
-                var el = document.getElementById('message');
-                el.value = '';
+                message.value = '';
             } catch (err) {
                 if (err instanceof SyntaxError) {
                     alert(' there was a syntaxError it and try again : ' + err.message);
@@ -136,11 +129,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
     signalSocketIo.on('knowledgetalk', function (data) {
         tLogBox('receive', data);
-        console.log('receive', data);
 
         if (!data.eventOp && !data.signalOp) {
             tLogBox('error', 'eventOp undefined');
-            console.log('error', 'eventOp undefined');
         }
 
         //로그인시 처리 이벤트

@@ -16,10 +16,10 @@ document.addEventListener('DOMContentLoaded', function() {
     let configuration;
    
     signalSocketIo.on('knowledgetalk', function(data) {
-      console.log('receive', data);
+      tLogBox('receive', data);
    
       if (!data.eventOp && !data.signalOp) {
-        console.log('error', 'eventOp undefined');
+        tLogBox('error', 'eventOp undefined');
       }
    
       if (data.eventOp === 'Login' && data.code ==='200' ) {
@@ -46,7 +46,7 @@ document.addEventListener('DOMContentLoaded', function() {
           roomId: roomId
         };
         try {
-          console.log('send', sendData);
+          tLogBox('send', sendData);
           signalSocketIo.emit('knowledgetalk', sendData);
   
         } catch (err) {
@@ -76,61 +76,6 @@ document.addEventListener('DOMContentLoaded', function() {
         redPen.disabled = false;
         bluePen.disabled = false;
 
-        blackPen.addEventListener('click', e => {
-          tTextbox('검정색을 선택하셨습니다.')
-          blackPen.disabled = true;
-          redPen.disabled = false;
-          bluePen.disabled = false;
-      
-          context.strokeStyle = 'black';
-      
-          let colorData = {
-            signalOp:	"Color",
-            reqNo:	"1234567",
-            color:	"#000000"
-          }
-      
-          signalSocketIo.emit('knowledgetalk', colorData);
-          tLogBox('knowledgetalk', colorData);
-      
-        })
-      
-        redPen.addEventListener('click', e => {
-          tTextbox('빨간색을 선택하셨습니다.')
-          blackPen.disabled = false;
-          redPen.disabled = true;
-          bluePen.disabled = false;
-          context.strokeStyle = 'red';
-      
-          let colorData = {
-            signalOp:	"Color",
-            reqNo:	"1234567",
-            color:	"#ff0000"
-          }
-      
-          signalSocketIo.emit('knowledgetalk', colorData);
-          tLogBox('knowledgetalk', colorData);
-        })
-      
-        bluePen.addEventListener('click', e => {
-          tTextbox('파란색을 선택하셨습니다.')
-          blackPen.disabled = false;
-          redPen.disabled = false;
-          bluePen.disabled = true
-          context.strokeStyle = 'blue';
-      
-          let colorData = {
-            signalOp:	"Color",
-            reqNo:	"1234567",
-            color:	"#0000ff"
-          }
-      
-          signalSocketIo.emit('knowledgetalk', colorData);
-          tLogBox('knowledgetalk', colorData);
-      
-        })
-
-
       }
 
       if (data.eventOp === 'SDP') {
@@ -158,7 +103,7 @@ document.addEventListener('DOMContentLoaded', function() {
             };
    
             try {
-              console.log('send', ansData);
+              tLogBox('send', ansData);
               signalSocketIo.emit('knowledgetalk', ansData);
             } catch (err) {
               if (err instanceof SyntaxError) {
@@ -186,7 +131,7 @@ document.addEventListener('DOMContentLoaded', function() {
         };
     
         try {
-          console.log('send', clearData);
+          tLogBox('send', clearData);
           signalSocketIo.emit('knowledgetalk', clearData);
         } catch (err) {
           if (err instanceof SyntaxError) {
@@ -210,7 +155,7 @@ document.addEventListener('DOMContentLoaded', function() {
         };
    
         try {
-          console.log('send', iceData);
+          tLogBox('send', iceData);
           signalSocketIo.emit('knowledgetalk', iceData);
         } catch (err) {
           if (err instanceof SyntaxError) {
@@ -236,7 +181,7 @@ document.addEventListener('DOMContentLoaded', function() {
       };
    
       try {
-        console.log('send', iceData);
+        tLogBox('send', iceData);
         signalSocketIo.emit('knowledgetalk', iceData);
       } catch (err) {
         if (err instanceof SyntaxError) {
@@ -262,7 +207,7 @@ document.addEventListener('DOMContentLoaded', function() {
       };
    
       try {
-        console.log('send', loginData);
+        tLogBox('send', loginData);
         signalSocketIo.emit('knowledgetalk', loginData);
       } catch (err) {
         if (err instanceof SyntaxError) {
@@ -285,7 +230,7 @@ document.addEventListener('DOMContentLoaded', function() {
       };
    
       try {
-        console.log('send', callData);
+        tLogBox('send', callData);
         signalSocketIo.emit('knowledgetalk', callData);
       } catch (err) {
         if (err instanceof SyntaxError) {
@@ -317,7 +262,7 @@ document.addEventListener('DOMContentLoaded', function() {
       };
    
       try {
-        console.log('send', clearData);
+        tLogBox('send', clearData);
         signalSocketIo.emit('knowledgetalk', clearData);
       } catch (err) {
         if (err instanceof SyntaxError) {
@@ -363,6 +308,60 @@ document.addEventListener('DOMContentLoaded', function() {
         context.closePath();
       });
     }
+
+    blackPen.addEventListener('click', e => {
+      tTextbox('검정색을 선택하셨습니다.')
+      blackPen.disabled = true;
+      redPen.disabled = false;
+      bluePen.disabled = false;
+  
+      context.strokeStyle = 'black';
+  
+      let colorData = {
+        signalOp:	"Color",
+        reqNo:	"1234567",
+        color:	"#000000"
+      }
+  
+      signalSocketIo.emit('knowledgetalk', colorData);
+      tLogBox('knowledgetalk', colorData);
+  
+    })
+  
+    redPen.addEventListener('click', e => {
+      tTextbox('빨간색을 선택하셨습니다.')
+      blackPen.disabled = false;
+      redPen.disabled = true;
+      bluePen.disabled = false;
+      context.strokeStyle = 'red';
+  
+      let colorData = {
+        signalOp:	"Color",
+        reqNo:	"1234567",
+        color:	"#ff0000"
+      }
+  
+      signalSocketIo.emit('knowledgetalk', colorData);
+      tLogBox('knowledgetalk', colorData);
+    })
+  
+    bluePen.addEventListener('click', e => {
+      tTextbox('파란색을 선택하셨습니다.')
+      blackPen.disabled = false;
+      redPen.disabled = false;
+      bluePen.disabled = true
+      context.strokeStyle = 'blue';
+  
+      let colorData = {
+        signalOp:	"Color",
+        reqNo:	"1234567",
+        color:	"#0000ff"
+      }
+  
+      signalSocketIo.emit('knowledgetalk', colorData);
+      tLogBox('knowledgetalk', colorData);
+  
+    })
    
     function setPen() {
       context.globalCompositeOperation = 'source-over';
@@ -384,7 +383,7 @@ document.addEventListener('DOMContentLoaded', function() {
       };
    
       try {
-        console.log('send', drawData);
+        tLogBox('send', drawData);
         signalSocketIo.emit('knowledgetalk', drawData);
       } catch (err) {
         if (err instanceof SyntaxError) {

@@ -17,10 +17,10 @@ document.addEventListener('DOMContentLoaded', function() {
     let context = whiteboard.getContext('2d');
    
     signalSocketIo.on('knowledgetalk', function(data) {
-      console.log('receive', data);
+      tLogBox('receive', data);
    
       if (!data.eventOp && !data.signalOp) {
-        console.log('error', 'eventOp undefined');
+        tLogBox('error', 'eventOp undefined');
       }
    
       if (data.eventOp === 'Login' && data.code ==='200') {
@@ -69,7 +69,7 @@ document.addEventListener('DOMContentLoaded', function() {
               };
    
               try {
-                console.log('send', sdpData);
+                tLogBox('send', sdpData);
                 signalSocketIo.emit('knowledgetalk', sdpData);
               } catch (err) {
                 if (err instanceof SyntaxError) {
@@ -103,7 +103,7 @@ document.addEventListener('DOMContentLoaded', function() {
         };
    
         try {
-          console.log('send', iceData);
+          tLogBox('send', iceData);
           signalSocketIo.emit('knowledgetalk', iceData);
         } catch (err) {
           if (err instanceof SyntaxError) {
@@ -176,7 +176,7 @@ document.addEventListener('DOMContentLoaded', function() {
       };
    
       try {
-        console.log('send', iceData);
+        tLogBox('send', iceData);
         signalSocketIo.emit('knowledgetalk', iceData);
       } catch (err) {
         if (err instanceof SyntaxError) {
@@ -210,7 +210,7 @@ document.addEventListener('DOMContentLoaded', function() {
       };
    
       try {
-        console.log('send', loginData);
+        tLogBox('send', loginData);
         signalSocketIo.emit('knowledgetalk', loginData);
       } catch (err) {
         if (err instanceof SyntaxError) {
@@ -232,7 +232,7 @@ document.addEventListener('DOMContentLoaded', function() {
       };
    
       try {
-        console.log('send', joinData);
+        tLogBox('send', joinData);
         signalSocketIo.emit('knowledgetalk', joinData);
       } catch (err) {
         if (err instanceof SyntaxError) {

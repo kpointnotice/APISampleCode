@@ -43,8 +43,6 @@ document.addEventListener('DOMContentLoaded', function () {
         tTextbox(friends);
       } 
 
-      // if(data.eventOp === 'MemberList' && data.code === '200'){
-      //   console.log('확인')
         if (data.type === "common" && data.code ==='200') {
           let test = data.result.common
           
@@ -59,8 +57,6 @@ document.addEventListener('DOMContentLoaded', function () {
         } else if (data.type === "common" && data.code ==='403') {
           tTextbox('해당 친구 이름은 없습니다.');
         }
-      // }
-      // tTextbox('아이디가 없습니다');
     }
   });
 
@@ -92,7 +88,7 @@ document.addEventListener('DOMContentLoaded', function () {
       limit,
       offset
     };
-    //20171011133100123
+    
     let memberList = {
       eventOp: 'MemberList',
       reqNo: reqNo++,

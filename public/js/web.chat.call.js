@@ -23,7 +23,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
         try {
             tLogBox('send(login)', loginData);
-            console.log('send(login)', loginData);
             signalSocketIo.emit('knowledgetalk', loginData);
         } catch (err) {
             if (err instanceof SyntaxError) {
@@ -47,7 +46,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
         try {
             tLogBox('send(call)', callData);
-            console.log('send(call)', callData);
             signalSocketIo.emit('knowledgetalk', callData);
         } catch (err) {
             if (err instanceof SyntaxError) {
@@ -69,17 +67,14 @@ document.addEventListener('DOMContentLoaded', function () {
         };
 
         try {
-            console.log('roomId확인용!!!',callEndData.roomId)
             loginBtn.disabled = false;
             tLogBox('send', callEndData);
-            console.log('send', callEndData);
             signalSocketIo.emit('knowledgetalk', callEndData);
             if (window.roomId) {
                 peerCon = new RTCPeerConnection(configuration);
                 peerCon.close();
                 peerCon = null;
                 window.roomId = null;
-                //이건 잘모르겠음...
             }
         } catch (err) {
             if (err instanceof SyntaxError) {
@@ -101,11 +96,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
             try {
                 tLogBox('send', chatData);
-                console.log('send', chatData);
                 chatTextBox(chatData.userId + ' : ' + chatData.message)                
                 signalSocketIo.emit('knowledgetalk', chatData);
-                var el = document.getElementById('message');
-                el.value = '';
+                message.value = '';
             } catch (err) {
                 if (err instanceof SyntaxError) {
                     alert(' there was a syntaxError it and try again : ' + err.message);
@@ -125,11 +118,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
         try {
             tLogBox('send', chatData);
-            console.log('send', chatData);
             chatTextBox(chatData.userId + ' : ' + chatData.message)
             signalSocketIo.emit('knowledgetalk', chatData);
-            var el = document.getElementById('message');
-            el.value = '';
+            message.value = '';
         } catch (err) {
             if (err instanceof SyntaxError) {
                 alert(' there was a syntaxError it and try again : ' + err.message);
@@ -141,10 +132,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
     signalSocketIo.on('knowledgetalk', function (data) {
         tLogBox('receive', data);
-        console.log('receive', data);
         if (!data.eventOp && !data.signalOp) {
             tLogBox('error', 'eventOp undefined');
-            console.log('error', 'eventOp undefined');
         }
 
         //로그인 버튼 이벤트
@@ -168,17 +157,16 @@ document.addEventListener('DOMContentLoaded', function () {
         if (data.eventOp === 'Call' && data.code !== '200') {
             roomId = data.roomId;
             let sendData = {
-            eventOp: 'ExitRoom',
-            reqNo: reqNo++,
-            userId: inputId.value,
-            userName : inputId.value,
-            reqDate: nowDate(),
-            roomId: roomId
+                eventOp: 'ExitRoom',
+                reqNo: reqNo++,
+                userId: inputId.value,
+                userName : inputId.value,
+                reqDate: nowDate(),
+                roomId: roomId
             };
             try {
-            console.log('send', sendData);
-            signalSocketIo.emit('knowledgetalk', sendData);
-            tTextbox('상대방이 로그인 되어 있지 않습니다.');
+                signalSocketIo.emit('knowledgetalk', sendData);
+                tTextbox('상대방이 로그인 되어 있지 않습니다.');
             } catch (err) {
             if (err instanceof SyntaxError) {
                 alert(' there was a syntaxError it and try again : ' + err.message);
@@ -201,11 +189,6 @@ document.addEventListener('DOMContentLoaded', function () {
         if (data.signalOp === 'Chat') {
             chatTextBox( data.userId + ' : ' + data.message)
         }
-
-        if (data.signalOp ==='Presence' && (data.action ==='exit' || data.action ==='end')){
-            //종료시 글 내용 삭제이벤트
-            document.getElementById('chat_Box').innerHTML = ""
-        }
         
         //방장 내가 통화 종료를 클릭시 이벤트 
         if (data.eventOp === 'ExitRoom' && data.code ==='200'){
@@ -222,7 +205,8 @@ document.addEventListener('DOMContentLoaded', function () {
         //상대방이 나갔을경우 이벤트
         if (data.signalOp === 'Presence' && (data.action === 'exit' || data.action ==='end')){
             callBtn.disabled = false;
-            
+            //종료시 글 내용 삭제이벤트
+            document.getElementById('chat_Box').innerHTML = ""
             let callEndData = {
                 eventOp: 'ExitRoom',
                 reqNo: reqNo,

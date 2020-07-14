@@ -26,7 +26,6 @@ document.addEventListener('DOMContentLoaded', function () {
         };
 
         try {
-            console.log('send(login)', loginData);
             tLogBox('send(login)', loginData);
             signalSocketIo.emit('knowledgetalk', loginData);
         } catch (err) {
@@ -50,7 +49,6 @@ document.addEventListener('DOMContentLoaded', function () {
         };
 
         try {
-            console.log('send(call)', callData);
             tLogBox('send(call)', callData);
             signalSocketIo.emit('knowledgetalk', callData);
         } catch (err) {
@@ -85,7 +83,6 @@ document.addEventListener('DOMContentLoaded', function () {
         };
 
         try {
-            console.log('send', callEndData);
             tLogBox('send', callEndData);
             signalSocketIo.emit('knowledgetalk', callEndData);
         } catch (err) {
@@ -112,7 +109,6 @@ document.addEventListener('DOMContentLoaded', function () {
         };
 
         try {
-            console.log('send(onIceCandidateHandler)', iceData);
             tLogBox('send(onIceCandidateHandler)', iceData);
             signalSocketIo.emit('knowledgetalk', iceData);
         } catch (err) {
@@ -129,11 +125,9 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     signalSocketIo.on('knowledgetalk', function (data) {
-        console.log('receive', data);
         tLogBox('receive', data);
 
         if (!data.eventOp && !data.signalOp) {
-            console.log('error', 'eventOp undefined');
             tLogBox('error', 'eventOp undefined');
         }
 
@@ -145,13 +139,10 @@ document.addEventListener('DOMContentLoaded', function () {
             tTextbox('아이디 비밀번호를 다시 확인해주세요')
         }
 
-        // if(data.eventOp === '')
-
         if (data.eventOp === 'Call') {
             
             
             if (data.code === '200') {
-                console.log('@!@#!@#')
                 tTextbox(`${inputTarget.value}님에게 통화 연결 중`);
 
                 configuration.push({
@@ -172,8 +163,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 });
 
             } else {
-                tTextbox('확인')
-                console.log('확인')
                 callBtn.disabled = true;
                 exitBtn.disabled = true;
                 loginBtn.disabled = false;
@@ -187,7 +176,6 @@ document.addEventListener('DOMContentLoaded', function () {
                   };
                   try {
                     tLogBox('send', logoutData);
-                    console.log('send', logoutData);
                     signalSocketIo.emit('knowledgetalk', logoutData);
                   } catch (err) {
                     if (err instanceof SyntaxError) {
@@ -210,13 +198,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 peerCon.ontrack = onAddStreamHandler;
                 localStream.getTracks().forEach(function (track) {
                     peerCon.addTrack(track, localStream);
-                    //addTrack 다른 유저에게 전송될 트랙들 묶음을 신규 미디어 트랜을 추가한다.
+                    //addTrack 다른 유저에게 전송될 트랙들 묶음을 신규 미디어 트랜을 추가
                 });
 
                 peerCon.setRemoteDescription(new RTCSessionDescription(data.sdp));
                 peerCon.createAnswer().then(sdp => {
                     peerCon.setLocalDescription(new RTCSessionDescription(sdp));
-                    // ??? setLocalDescription 로컬 설명은 미디어 형식을 포함하는 연결의 로컬 엔드에 대한 속성을 명시
+                    //setLocalDescription 로컬 설명은 미디어 형식을 포함하는 연결의 로컬 엔드에 대한 속성을 명시
 
                     let ansData = {
                         eventOp: 'SDP',
@@ -230,7 +218,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     };
 
                     try {
-                        console.log('sdp answer data ', ansData);
+                        tLogBox('sdp answer data ', ansData);
                         signalSocketIo.emit('knowledgetalk', ansData);
                     } catch (err) {
                         if (err instanceof SyntaxError) {
@@ -258,7 +246,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
             try {
                 tTextbox('전화 연결이 되었습니다.');
-                console.log('send(candidate)', iceData);
                 tLogBox('send(candidate)', iceData);
                 signalSocketIo.emit('knowledgetalk', iceData);
             } catch (err) {
@@ -271,7 +258,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         if(data.eventOp === 'ExitRoom'){
-            // tTextbox(`${inputTarget.value}님이 통화를 종료 하였습니다.`);
             tTextbox('통화 종료 되었습니다.');
         }
 
@@ -298,7 +284,6 @@ document.addEventListener('DOMContentLoaded', function () {
             };
 
             try {
-                console.log('send', callEndData);
                 tLogBox('send', callEndData);
                 signalSocketIo.emit('knowledgetalk', callEndData);
             } catch (err) {
