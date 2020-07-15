@@ -87,10 +87,18 @@ document.addEventListener('DOMContentLoaded', function() {
       
       //공유 자원 예약 이벤트
       if(data.eventOp === 'SessionReserve' && data.code === '200'){
+        sessionBtn.disabled = true;
+        endsessionBtn.disabled = false;
         tTextbox('공유자원이 예약 되었습니다')
       } 
       if(data.eventOp === 'SessionReserve' && data.code !== '200'){
+        sessionBtn.disabled = false;
         tTextbox('다른분이 먼저 공유자원을 예약 하셨습니다.')
+      }
+      if(data.eventOp === 'SessionReserveEnd' && data.code === '200'){
+        sessionBtn.disabled = false;
+        endsessionBtn.disabled = true;
+        tTextbox('해지 되었습니다.')
       }
 
       //회의 종료시 response
@@ -106,6 +114,29 @@ document.addEventListener('DOMContentLoaded', function() {
         callBtn.disabled = false
         loginBtn.disabled = true
         joinBtn.disabled = true;
+        sessionBtn.disabled = true;
+        endsessionBtn.disabled = true;
+
+        console.log(roomId)
+        let sendData = {
+          eventOp: 'ExitRoom',
+          reqNo: reqNo++,
+          userId: inputId.value,
+          userName : inputId.value,
+          reqDate: nowDate(),
+          roomId: roomId
+        };
+        try {
+          tLogBox('send', sendData);
+          signalSocketIo.emit('knowledgetalk', sendData);
+  
+        } catch (err) {
+          if (err instanceof SyntaxError) {
+            alert(' there was a syntaxError it and try again : ' + err.message);
+          } else {
+            throw err;
+          }
+        }
       }
    
       if (data.eventOp === 'Candidate') {
@@ -251,4 +282,26 @@ document.addEventListener('DOMContentLoaded', function() {
           }
         }
     })
+
+    endsessionBtn.addEventListener('click', function(e){
+      let sessionEndData = {
+          eventOp : 'SessionReserveEnd',
+          reqNo : reqNo ++,
+          userId : inputId.value,
+          reqDate : nowDate(),
+          roomId
+      }
+      try {
+        tLogBox('send', sessionEndData);
+        signalSocketIo.emit('knowledgetalk', sessionEndData);
+      } catch (err) {
+        if (err instanceof SyntaxError) {
+          alert(' there was a syntaxError it and try again : ' + err.message);
+        } else {
+          throw err;
+        }
+      }
+  })
+
+
   });

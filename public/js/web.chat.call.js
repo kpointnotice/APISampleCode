@@ -34,6 +34,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     callBtn.addEventListener('click', function (e) {
+        callBtn.disabled = true;
         let callData = {
             eventOp: 'Call',
             reqNo: reqNo++,
@@ -140,6 +141,8 @@ document.addEventListener('DOMContentLoaded', function () {
         if (data.eventOp === 'Login' && data.code === '200') {
             loginBtn.disabled = true;
             callBtn.disabled = false;
+            inputid.disabled = true;
+            inputpw.disabled = true;
             tTextbox('로그인 되었습니다.');
         }
         if ( data.eventOp === 'Login' && data.code !== '200') {
@@ -149,6 +152,10 @@ document.addEventListener('DOMContentLoaded', function () {
         //전화 걸기 버튼 클릭시 이벤트
         if (data.eventOp === 'Call' && data.code === '200') {
             tTextbox('상대방에게 통화 연결중입니다...')
+            console.log('확인', setTimeout)
+            // if(){
+            //     setTimeout(joinout, 3000);
+            // }
             roomId = data.roomId
             if (data.message !== 'OK') {
             return;
@@ -184,6 +191,28 @@ document.addEventListener('DOMContentLoaded', function () {
             chatBtn.disabled = false;
             exitBtn.disabled = false;
             tTextbox('통화가 연결되었습니다.');
+            
+            // setTimeout(joinout, 3000);
+        }
+        function joinout(){
+            let sendData = {
+                eventOp: 'ExitRoom',
+                reqNo: reqNo++,
+                userId: inputId.value,
+                userName : inputId.value,
+                reqDate: nowDate(),
+                roomId: roomId
+            };
+            try {
+                signalSocketIo.emit('knowledgetalk', sendData);
+                tTextbox('상대방이 로그인 되어 있지 않습니다.');
+            } catch (err) {
+            if (err instanceof SyntaxError) {
+                alert(' there was a syntaxError it and try again : ' + err.message);
+            } else {
+                throw err;
+            }
+            }
         }
 
         if (data.signalOp === 'Chat') {

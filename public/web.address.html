@@ -12,21 +12,24 @@
     <div class="titlebox">
         <div style="margin-block-end: 5px; margin-top: 5px;">주소록</div>
         <div class='login'>
-            id : <input id='inputid' value='apple'><br />
+            id : <input id='inputid' value='apple' ><br />
             pw : <input id='inputpw' type='password' value='apple'><br/>
-            target : <input id='inputTarget' value='melon' /><br />
+            ID 검색 : <input id='inputTarget' value='' /><br />
             <button id='LoginBtn'>로그인</button>
             <button id='searchBtn' disabled>검색</button>
             <button id='addBtn' disabled>친구추가</button>
             <button id='delBtn' disabled>친구삭제</button>
-            <div id='memberList'></div>
+        </div>
+    </div>
+    <div class="titlebox">
+        <div id='memberList'>
+ 
         </div>
     </div>
 
     <!-- 메시지 -->
-    <div class='message' style="height: 120px;">
+    <div class='message'>
         <div id='text_print_Box'></div>
-        <div id='chat_Box'></div>
     </div>
     
     <!-- 로그 메시지 -->

@@ -26,6 +26,7 @@ document.addEventListener('DOMContentLoaded', function () {
         };
 
         try {
+            console.log('send(login)', loginData);
             tLogBox('send(login)', loginData);
             signalSocketIo.emit('knowledgetalk', loginData);
         } catch (err) {
@@ -49,6 +50,7 @@ document.addEventListener('DOMContentLoaded', function () {
         };
 
         try {
+            console.log('send(call)', callData);
             tLogBox('send(call)', callData);
             signalSocketIo.emit('knowledgetalk', callData);
         } catch (err) {
@@ -83,6 +85,7 @@ document.addEventListener('DOMContentLoaded', function () {
         };
 
         try {
+            console.log('send', callEndData);
             tLogBox('send', callEndData);
             signalSocketIo.emit('knowledgetalk', callEndData);
         } catch (err) {
@@ -109,6 +112,7 @@ document.addEventListener('DOMContentLoaded', function () {
         };
 
         try {
+            console.log('send(onIceCandidateHandler)', iceData);
             tLogBox('send(onIceCandidateHandler)', iceData);
             signalSocketIo.emit('knowledgetalk', iceData);
         } catch (err) {
@@ -125,13 +129,23 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     signalSocketIo.on('knowledgetalk', function (data) {
+        console.log('receive', data);
         tLogBox('receive', data);
 
         if (!data.eventOp && !data.signalOp) {
             tLogBox('error', 'eventOp undefined');
         }
 
+        // if(data.eventOp === 'Logout' && data.code === '200'){
+        //     loginBtn.disabled = false;
+        //     callBtn.disabled = true;
+        //     inputid.disabled = false;
+        //     inputpw.disabled = false;
+        // }
+
         if (data.eventOp === 'Login' && data.code === '200') {
+            inputid.disabled = true;
+            inputpw.disabled = true;
             loginBtn.disabled = true;
             callBtn.disabled = false;
             tTextbox('로그인 되었습니다');
@@ -140,8 +154,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         if (data.eventOp === 'Call') {
-            
-            
             if (data.code === '200') {
                 tTextbox(`${inputTarget.value}님에게 통화 연결 중`);
 
@@ -152,7 +164,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 });
     
                 callBtn.disabled = true;
-                exitBtn.disabled = false;
                 navigator.mediaDevices.getUserMedia({
                     video: true,
                     audio: true
@@ -163,9 +174,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 });
 
             } else {
-                callBtn.disabled = true;
+                callBtn.disabled = false;
                 exitBtn.disabled = true;
-                loginBtn.disabled = false;
+                loginBtn.disabled = true;
                 tTextbox(`(${inputTarget.value})님이 로그인 되어 있지 않습니다!`)
                 
                 let logoutData = {
@@ -175,6 +186,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     reqDate: nowDate()
                   };
                   try {
+                      console.log('send', logoutData);
                     tLogBox('send', logoutData);
                     signalSocketIo.emit('knowledgetalk', logoutData);
                   } catch (err) {
@@ -218,6 +230,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     };
 
                     try {
+                        console.log('sdp answer data ', ansData);
                         tLogBox('sdp answer data ', ansData);
                         signalSocketIo.emit('knowledgetalk', ansData);
                     } catch (err) {
@@ -246,6 +259,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             try {
                 tTextbox('전화 연결이 되었습니다.');
+                console.log('send(candidate)', iceData);
                 tLogBox('send(candidate)', iceData);
                 signalSocketIo.emit('knowledgetalk', iceData);
             } catch (err) {
@@ -259,6 +273,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
         if(data.eventOp === 'ExitRoom'){
             tTextbox('통화 종료 되었습니다.');
+        }
+
+        if(data.signalOp === 'Presence' && data.action === 'join'){
+            exitBtn.disabled = false;
         }
 
         if (data.signalOp === 'Presence' && data.action === 'exit') {
@@ -284,6 +302,7 @@ document.addEventListener('DOMContentLoaded', function () {
             };
 
             try {
+                console.log('send', callEndData);
                 tLogBox('send', callEndData);
                 signalSocketIo.emit('knowledgetalk', callEndData);
             } catch (err) {

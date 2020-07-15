@@ -137,6 +137,8 @@ document.addEventListener('DOMContentLoaded', function () {
         //로그인시 처리 이벤트
         if (data.eventOp === 'Login' && data.code === '200') {
             loginBtn.disabled = true;
+            inputId.disabled = true;
+            inputPw.disabled = true;
             tTextbox('로그인 되었습니다.');
         } 
         if (data.eventOp === 'Login' && data.code !== '200') {
@@ -156,9 +158,9 @@ document.addEventListener('DOMContentLoaded', function () {
             exitBtn.disabled = false;
             tTextbox('통화가 연결되었습니다.');
         }
-        if (data.eventOp === 'Join' && data.code !== '200') {
-            tTextbox('알 수 없는 에러가 발생하였습니다 관리자에게 문의주세요.');
-        }
+        // if (data.eventOp === 'Join' && data.code !== '200') {
+        //     tTextbox('알 수 없는 에러가 발생하였습니다 관리자에게 문의주세요.');
+        // }
 
         if (data.signalOp === 'Chat') {
             chatTextBox( data.userId + ' : ' + data.message)
@@ -170,7 +172,7 @@ document.addEventListener('DOMContentLoaded', function () {
             chatBtn.disabled = true;
             loginBtn.disabled = true;
             exitBtn.disabled = true;
-            joinBtn.disabled = false;
+            joinBtn.disabled = true;
 
             //종료시 글 내용 삭제이벤트
             document.getElementById('chat_Box').innerHTML = ""
@@ -182,7 +184,7 @@ document.addEventListener('DOMContentLoaded', function () {
             exitBtn.disabled = true;
             message.disabled = true;
             chatBtn.disabled = true;
-            joinBtn.disabled = false
+            joinBtn.disabled = true;
 
             //종료시 글 내용 삭제이벤트
             document.getElementById('chat_Box').innerHTML = ""
