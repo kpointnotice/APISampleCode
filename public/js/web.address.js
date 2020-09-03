@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', function () {
-  let inputid = document.getElementById('inputid');
-  let inputpw = document.getElementById('inputpw');
+  let inputId = document.getElementById('inputId');
+  let inputPw = document.getElementById('inputPw');
   let addBtn = document.getElementById('addBtn');
   let delBtn = document.getElementById('delBtn');
   let LoginBtn = document.getElementById('LoginBtn')
@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', function () {
   let reqNo = 1;
 
   signalSocketIo.on('knowledgetalk', function (data) {
-
+    
     tLogBox('receive', data);
     if (!data.eventOp && !data.signalOp) {
       tLogBox('error', 'eventOp undefind');
@@ -18,13 +18,18 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (data.eventOp == 'Login') {
       if(data.code == '200'){
+        inputId.disabled = true;
+        inputPw.disabled = true;
         LoginBtn.disabled = true;
         searchBtn.disabled = false;
         addBtn.disabled = false;
         delBtn.disabled = false;
         memberList();
+      }else if(data.code !== '200'){
+        tTextbox('아이디 비밀번호를 다시 확인해주세요')
       }
     }
+
     if (data.eventOp === 'Contact') {
       memberList();
     }
@@ -34,18 +39,26 @@ document.addEventListener('DOMContentLoaded', function () {
         let friends = '친구 목록 : ';
 
         for (let i = 0; i < data.result.friend.length; i++) {
-          friends += data.result.friend[i].id 
+          friends += data.result.friend[i].id
                     + (i < data.result.friend.length - 1 ? ', ' : '');
         }  
-
         tTextbox(friends);
       } 
 
-      if (data.type === "common") {
-        let search = '검색 결과 : ' + data.result.common[0].id;
+        if (data.type === "common" && data.code ==='200') {
+          let test = data.result.common
+          
+          let searchId = '';
+          for(var i=0; i<test.length; i++){
+            searchId += data.result.common[i].id
+            searchId += i< test.length-1 ? ',' : ''
+          }
 
-        tTextbox(search);
-      }
+          let search = '검색 결과 : ' + searchId;
+          tTextbox(search);
+        } else if (data.type === "common" && data.code ==='403') {
+          tTextbox('해당 친구 이름은 없습니다.');
+        }
     }
   });
 
@@ -53,8 +66,8 @@ document.addEventListener('DOMContentLoaded', function () {
     let loginData = {
       eventOp: 'Login',
       reqNo: reqNumber(),
-      userId: inputid.value,
-      userPw: passwordSHA256(inputpw.value),
+      userId: inputId.value,
+      userPw: passwordSHA256(inputPw.value),
       reqDate: getDate(),
       deviceType: 'pc'
     };
@@ -77,11 +90,11 @@ document.addEventListener('DOMContentLoaded', function () {
       limit,
       offset
     };
-
+    
     let memberList = {
       eventOp: 'MemberList',
       reqNo: reqNo++,
-      reqDate: 20171011133100123,
+      reqDate: new Date(),
       type: 'friend',
       option: objOp
     };
@@ -97,12 +110,16 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   }
 
-  //서치 클릭시
+  //검색 클릭 이벤트
   searchBtn.addEventListener('click', e => {
+    if(inputTarget.value.trim() === '' || inputTarget.value == null){
+      return false;
+    }
+
     let member = {
       eventOp: 'MemberList',
       reqNo: reqNo++,
-      reqDate: 20171011133100123,
+      reqDate: new Date(),
       type: 'common',
       search: inputTarget.value,
       option: {
@@ -123,12 +140,16 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   })
 
-  // 친구추가
+  // 친구추가 클릭 이벤트
   addBtn.addEventListener('click', function (e) {
+    if(inputTarget.value.trim() === '' || inputTarget.value == null){
+      return false;
+    }
+
     let addFriend = {
       eventOp: 'Contact',
       reqNo: reqNo++,
-      reqDate: 20171011133100123,
+      reqDate: new Date(),
       type: 'add',
       target: inputTarget.value
     };
@@ -144,18 +165,22 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   });
 
-  //친구 삭제
+  //친구 삭제 클릭 이벤트
   delBtn.addEventListener('click', function (e) {
-    let addFriend = {
+    if(inputTarget.value.trim() === '' || inputTarget.value == null){
+      return false;
+    }
+
+    let delFriend = {
       eventOp: 'Contact',
       reqNo: reqNo++,
-      reqDate: 20171011133100123,
+      reqDate: new Date(),
       type: 'delete',
       target: inputTarget.value
     };
     try {
-      tLogBox('send', JSON.stringify(addFriend));
-      signalSocketIo.emit('knowledgetalk', addFriend);
+      tLogBox('send', JSON.stringify(delFriend));
+      signalSocketIo.emit('knowledgetalk', delFriend);
     } catch (err) {
       if (err instanceof SyntaxError) {
         alert('there was a syntaxError it and try again :' + err.message);

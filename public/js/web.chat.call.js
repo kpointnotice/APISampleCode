@@ -115,6 +115,7 @@ document.addEventListener('DOMContentLoaded',function(){
     //채팅 작성 엔터 이벤트
     message.addEventListener('keydown', function (e) {
         if(event.keyCode == 13){
+            //공백 필터링
             if((message.value).trim() === '' || message.value == null){
                return false;
             }

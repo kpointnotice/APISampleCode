@@ -4,11 +4,8 @@
     <meta charset='UTF-8' />
     <meta name='viewport' content='width=device-width, initial-scale=1.0' />
     <meta http-equiv='X-UA-Compatible' content='ie=edge' />
+    <link rel= "stylesheet" href="./css/wrap.css">
     <title>Sample Consulting Web</title>
-    <script src='https://webrtchacks.github.io/adapter/adapter-latest.js'></script>
-    <script src='https://knowledgepoint.co.kr/sample/lib/socket.io.js'></script>
-    <script src='../lib/common.js'></script>
-    <script src='js/web.doc.share.target.js'></script>
   </head>
   <body>
     <div class='login'>
@@ -17,9 +14,24 @@
       <button id='loginBtn'>로그인</button>
       <button id='joinBtn' disabled>전화받기</button>
     </div>
+
     <video id='localVideo' autoplay muted></video>
     <video id='remoteVideo' autoplay></video> <br />
+
+    <!-- 메시지 -->
+    <div class='message'>
+      <div id='text_print_Box'></div>
+    </div>
+
+    <!-- 로그 -->
+    <div id='printBox' class='printBox'></div>
+
     <canvas id='remoteDoc'></canvas>
     <div id='printBox'></div>
+
+    <script src='https://webrtchacks.github.io/adapter/adapter-latest.js'></script>
+    <script src='http://localhost:5000/lib/socket.io.js'></script>
+    <script src='./lib/common.js'></script>
+    <script src='./js/web.doc.share.target.js'></script>
   </body>
 </html>
