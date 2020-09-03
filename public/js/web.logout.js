@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
       });
 
-    //로그인 했을 때,
+    //로그인 이벤트
     loginBtn.addEventListener('click', function (e) {
         let loginData = {
             eventOp: 'Login',
