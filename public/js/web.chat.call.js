@@ -7,9 +7,9 @@ document.addEventListener('DOMContentLoaded',function(){
     const exitBtn = document.getElementById('exitBtn');
     const chatBtn = document.getElementById('chatBtn');
     const message = document.getElementById('message');
-    const messageFrom = document.getElementById('messageFrom');
     
     let reqNo = 1;
+    let configuration = [];
     
     loginBtn.addEventListener('click',function(e){
         let loginData = {
@@ -57,7 +57,7 @@ document.addEventListener('DOMContentLoaded',function(){
     
     });
     
-    exitBtn.addEventListener('click', function(e){
+    exitBtn.addEventListener('click', function (e) {
         let callEndData = {
             eventOp: 'ExitRoom',
             reqNo: reqNo,
@@ -65,10 +65,17 @@ document.addEventListener('DOMContentLoaded',function(){
             reqDate: nowDate(),
             roomId
         };
-    
+
         try {
+            loginBtn.disabled = false;
             tLogBox('send', callEndData);
             signalSocketIo.emit('knowledgetalk', callEndData);
+            if (window.roomId) {
+                peerCon = new RTCPeerConnection(configuration);
+                peerCon.close();
+                peerCon = null;
+                window.roomId = null;
+            }
         } catch (err) {
             if (err instanceof SyntaxError) {
                 alert('there was a syntaxError it and try again:' + err.message);
@@ -77,8 +84,13 @@ document.addEventListener('DOMContentLoaded',function(){
             }
         }
     });
- 
+    
+    //채팅 송신 버튼 클릭 이벤트
     chatBtn.addEventListener('click',function(e){
+        if((message.value).trim() === '' || message.value == null){
+            return false;
+         }
+
         let chatData = {
             signalOp: 'Chat',
             userId: inputId.value,
@@ -87,12 +99,44 @@ document.addEventListener('DOMContentLoaded',function(){
  
         try {
             tLogBox('send',chatData);
+            document.getElementById('chat_Box').style.display = 'block';
+            chatTextBox(chatData.userId + ' : ' + chatData.message);
             signalSocketIo.emit('knowledgetalk', chatData);
+            message.value = '';
         } catch (err) {
             if (err instanceof SyntaxError) {
                 alert(' there was a syntaxError it and try again : ' + err.message);
             } else {
                 throw err;
+            }
+        }
+    });
+
+    //채팅 작성 엔터 이벤트
+    message.addEventListener('keydown', function (e) {
+        if(event.keyCode == 13){
+            if((message.value).trim() === '' || message.value == null){
+               return false;
+            }
+
+            let chatData = {
+                signalOp: 'Chat',
+                userId: inputId.value,
+                message: message.value
+            }
+
+            try {
+                tLogBox('send', chatData);
+                document.getElementById('chat_Box').style.display = 'block';
+                chatTextBox(chatData.userId + ' : ' + chatData.message)                
+                signalSocketIo.emit('knowledgetalk', chatData);
+                message.value = '';
+            } catch (err) {
+                if (err instanceof SyntaxError) {
+                    alert(' there was a syntaxError it and try again : ' + err.message);
+                } else {
+                    throw err;
+                }
             }
         }
     });
@@ -103,24 +147,117 @@ document.addEventListener('DOMContentLoaded',function(){
         if(!data.eventOp && !data.signalOp){
             tLogBox('error', 'eventOp undefined');
         }
- 
-        if (data.eventOp === 'Login') {
+        
+        //로그인시 처리 이벤트
+        if (data.eventOp === 'Login' && data.code === '200') {
+            inputId.disabled = true;
+            inputPw.disabled = true;
             loginBtn.disabled = true;
             callBtn.disabled = false;
+            tTextbox('로그인 되었습니다.');
+        }
+        
+        if (data.eventOp === 'Login' && data.code !== '200') {
+            tTextbox('아이디 비번을 다시 확인해주세요');
         }
     
-        if(data.eventOp === 'Call'){
+        //전화 걸기 버튼 클릭시 이벤트
+        if(data.eventOp === 'Call' && data.code === '200') {
+            inputTarget.disabled = true;
+            callBtn.disabled = true;
+            exitBtn.disabled = false;
+            tTextbox('상대방에게 통화 연결중입니다...')
+            roomId = data.roomId            
             if(data.message !== 'OK'){
                 return;
             }
-    
+        }
+
+        if (data.eventOp === 'Call' && data.code !== '200') {
+            roomId = data.roomId;
+            let sendData = {
+                eventOp: 'ExitRoom',
+                reqNo: reqNo++,
+                userId: inputId.value,
+                userName : inputId.value,
+                reqDate: nowDate(),
+                roomId: roomId
+            };
+            try {
+                signalSocketIo.emit('knowledgetalk', sendData);
+                tTextbox('상대방이 로그인 되어 있지 않습니다.');
+            } catch (err) {
+            if (err instanceof SyntaxError) {
+                alert(' there was a syntaxError it and try again : ' + err.message);
+            } else {
+                throw err;
+            }
+            }
+        }
+
+         //전화 걸기 됐을때 이벤트
+         if(data.signalOp === 'Presence' && data.action === 'join'){
             callBtn.disabled = true;
+            message.disabled = false;
+            chatBtn.disabled = false;
+            exitBtn.disabled = false;
+            tTextbox('통화가 연결되었습니다.');
         }
- 
+
+        //채팅내용 송신했을 때 이벤트
         if(data.signalOp === 'Chat'){
-            messageFrom.value = data.userId + ' : ' + data.message;
+            document.getElementById('chat_Box').style.display = 'block';
+            chatTextBox(data.userId + ' : ' + data.message);
         }
+        
+        //내가 통화 종료를 클릭시 이벤트 
+        if (data.eventOp === 'ExitRoom' && data.code ==='200'){
+            inputTarget.disabled = false;
+            loginBtn.disabled = true;
+            callBtn.disabled = false;
+            exitBtn.disabled = true;
+            message.disabled = true;
+            chatBtn.disabled = true;
+
+            //종료시 글 내용 삭제이벤트
+            document.getElementById('chat_Box').innerHTML = ""
+            document.getElementById('chat_Box').style.display = 'none';
+            tTextbox('통화가 종료 되었습니다')
+        }
+
+        //상대방이 나갔을경우 이벤트
+        if (data.signalOp === 'Presence' && (data.action === 'exit' || data.action ==='end')){
+            callBtn.disabled = false;
+            //종료시 글 내용 삭제이벤트
+            document.getElementById('chat_Box').innerHTML = "";
+            document.getElementById('chat_Box').style.display = 'none';
+            let callEndData = {
+                eventOp: 'ExitRoom',
+                reqNo: reqNo,
+                userId: inputId.value,
+                reqDate: nowDate(),
+                roomId
+            };
     
+            try {
+                tLogBox('send', callEndData);
+                signalSocketIo.emit('knowledgetalk', callEndData);
+                if (window.roomId) {
+                    peerCon = new RTCPeerConnection(configuration);
+                    peerCon.close();
+                    peerCon = null;
+                    window.roomId = null;
+                }
+            } catch (err) {
+                if (err instanceof SyntaxError) {
+                    alert('there was a syntaxError it and try again:' + err.message);
+                } else {
+                    throw err;
+                }
+            }
+            tTextbox('통화가 종료 되었습니다.');
+        }
+
     });
  
 })

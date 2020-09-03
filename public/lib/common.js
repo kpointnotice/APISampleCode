@@ -1,4 +1,4 @@
-const signalServerConnectURL = 'https://106.240.247.44:7101/SignalServer';
+const signalServerConnectURL = 'https://localhost:7101/SignalServer';
 let reqNo = 1;
  
 (function init() {
@@ -230,6 +230,10 @@ function tTextbox(text) {
 }
 
 function chatTextBox(text){
-  let printBox = document.getElementById('chat_Box');
-  printBox.innerText = text + '\n' + printBox.innerText;
+  let chatBox = document.getElementById('chat_Box');
+  if(chatBox.innerText !== ''){
+    text = '\n' + text;
+  }
+  chatBox.innerText = chatBox.innerText + text;
+  chatBox.scrollTop = chatBox.scrollHeight;
 }

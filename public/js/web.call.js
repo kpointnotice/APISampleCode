@@ -84,6 +84,12 @@ document.addEventListener('DOMContentLoaded', function () {
         try {
             tLogBox('send', callEndData);
             signalSocketIo.emit('knowledgetalk', callEndData);
+            if (window.roomId) {
+                peerCon = new RTCPeerConnection(configuration);
+                peerCon.close();
+                peerCon = null;
+                window.roomId = null;
+            }
         } catch (err) {
             if (err instanceof SyntaxError) {
                 alert('there was a syntaxError it and try again:' + err.message);
