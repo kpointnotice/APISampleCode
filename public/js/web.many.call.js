@@ -32,7 +32,7 @@ document.addEventListener('DOMContentLoaded', function () {
     };
 
     try {
-      tLogBox('send', loginData); 
+      tLogBox('send', loginData);
       signalSocketIo.emit('knowledgetalk', loginData);  //signalling server에 로그인 사용자 객체 전달
     } catch (err) {
       if (err instanceof SyntaxError) {
@@ -52,7 +52,7 @@ document.addEventListener('DOMContentLoaded', function () {
       userId: inputId.value,
       reqDate: nowDate(),
       reqDeviceType: 'pc',
-      targetId: ['t111','101010', '202020', 'orange'],
+      targetId: ['apple', 'melon', 'orange'],
     };
 
     try {
@@ -128,7 +128,7 @@ document.addEventListener('DOMContentLoaded', function () {
       localStream = await navigator.mediaDevices.getUserMedia({
         video: {
           width: width,
-          height: height, 
+          height: height,
           frameRate: {
             ideal: framerate,   //최적프레임율
             max: framerate      //최대프레임율
@@ -308,9 +308,9 @@ document.addEventListener('DOMContentLoaded', function () {
           reqDate: nowDate(),
           deviceType: 'pc'
         };
-        
+
         try {
-          tLogBox('send', loginData); 
+          tLogBox('send', loginData);
           signalSocketIo.emit('knowledgetalk', loginData);  //signalling server에 로그인 사용자 객체 전달
         } catch (err) {
           if (err instanceof SyntaxError) {
@@ -408,7 +408,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         if(data.eventOp === 'Call' && data.code !== '200'){
           tTextbox('상대방이 로그인 되어 있지 않습니다.');
-          
+
           roomId = data.roomId;
           let sendData = {
             eventOp: 'ExitRoom',
@@ -436,7 +436,7 @@ document.addEventListener('DOMContentLoaded', function () {
         joinBtn.disabled = true;
         roomId = data.roomId;
         exitBtn.disabled = false;
-        
+
         tTextbox('회의에 참여 하였습니다.');
 
         if (data.code !== '200') {
@@ -469,7 +469,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         if (data.action === 'join') {
           tTextbox('회의를 시작 하셔도 됩니다.')
-        } 
+        }
         break;
 
       case 'ExitRoom':
