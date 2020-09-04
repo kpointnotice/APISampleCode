@@ -587,7 +587,7 @@ document.addEventListener('DOMContentLoaded', function () {
     try {
       console.log('send', sendData);
       signalSocketIo.emit('knowledgetalk', sendData);
-      
+
     } catch (err) {
       if (err instanceof SyntaxError) {
         alert(' there was a syntaxError it and try again : ' + err.message);
