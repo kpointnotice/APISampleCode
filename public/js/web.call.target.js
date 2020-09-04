@@ -80,6 +80,12 @@ document.addEventListener('DOMContentLoaded', function () {
         try {
             tLogBox('send', callEndData);
             signalSocketIo.emit('knowledgetalk', callEndData);
+
+            //추가한부분(신윤호) : 전화받기 버튼 비활성화, 텍스트박스 처리
+            joinBtn.disabled = true;
+            tTextbox('전화를 종료했습니다.');
+            //
+
             if (window.roomId) {
                 window.roomId = null;
             }
@@ -196,6 +202,12 @@ document.addEventListener('DOMContentLoaded', function () {
                             }
                         }
                     })
+                }).catch(err => {
+                    exitBtn.disabled = true;
+                    let refreshCheck = confirm('카메라 / 마이크 권한을 재 설정 하세요.');
+                    if (refreshCheck) {
+                        window.location.reload()
+                    }
                 })
         }
 
@@ -228,12 +240,14 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         if (data.signalOp == 'Presence' && data.action == 'end') {
-            localStream.getTracks()[0].stop();
-            localStream.getTracks()[1].stop();
-            localStream = null;
-            
-            peerCon.close();
-            peerCon = null;
+            if (localStream && peerCon) {
+                localStream.getTracks()[0].stop();
+                localStream.getTracks()[1].stop();
+                localStream = null;
+
+                peerCon.close();
+                peerCon = null;
+            }
 
             localVideo.srcObject = null;
             remoteVideo.srcObject = null;
@@ -241,6 +255,8 @@ document.addEventListener('DOMContentLoaded', function () {
             joinBtn.disabled = false;
             exitBtn.disabled = true;
         }
+
+
 
     })
 
