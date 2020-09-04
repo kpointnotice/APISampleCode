@@ -35,7 +35,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
     });
-    
+
     callBtn.addEventListener('click', function (e) {
 
         let callData = {
@@ -90,6 +90,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 peerCon = null;
                 window.roomId = null;
             }
+
+            //추가한부분 : 텍스트박스 내용변경
+            tTextbox('전화를 종료했습니다.');
+
         } catch (err) {
             if (err instanceof SyntaxError) {
                 alert('there was a syntaxError it and try again:' + err.message);
