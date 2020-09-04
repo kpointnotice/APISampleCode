@@ -30,6 +30,7 @@ document.addEventListener('DOMContentLoaded', function() {
  
     try {
       console.log('send', loginData);
+      tLogBox('send', loginData);
       signalSocketIo.emit('knowledgetalk', loginData);
     } catch (err) {
       if (err instanceof SyntaxError) {
@@ -42,6 +43,8 @@ document.addEventListener('DOMContentLoaded', function() {
  
   //전화걸기 버튼 클릭 이벤트
   callBtn.addEventListener('click', function(e) {
+    inputTarget.disabled = true;
+
     let callData = {
       eventOp: 'Call',
       reqNo: reqNo++,
@@ -54,6 +57,7 @@ document.addEventListener('DOMContentLoaded', function() {
  
     try {
       console.log('send', callData);
+      tLogBox('send', callData);
       signalSocketIo.emit('knowledgetalk', callData);
     } catch (err) {
       if (err instanceof SyntaxError) {
@@ -80,6 +84,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     try {
       console.log('send', shareEndData);
+      tLogBox('send', shareEndData);
       signalSocketIo.emit('knowledgetalk', shareEndData);
     } catch (err) {
       if (err instanceof SyntaxError) {
@@ -100,8 +105,16 @@ document.addEventListener('DOMContentLoaded', function() {
       
       //이미지파일만 첨부가능하도록 체크
       if(!checkFileType(fileObj)){
+        tTextbox(`${fileObj.name} 실패: 이미지파일만 첨부가능합니다.`);
         continue;
       }
+
+      //파일 사이즈 제한 체크(5MB 이하)
+      if(checkFileSize(fileObj)){
+        tTextbox(`${fileObj.name} 실패: 첨부파일은 5MB 이하만 가능합니다.`);
+        continue;
+      }
+
       let reader = new FileReader();
       
       //첨부파일 로드 완료되었을 때의 이벤트
@@ -143,6 +156,7 @@ document.addEventListener('DOMContentLoaded', function() {
  
           try {
             console.log('send', fileData);
+            tLogBox('send', fileData);
             signalSocketIo.emit('knowledgetalk', fileData);
           } catch (err) {
             if (err instanceof SyntaxError) {
@@ -172,6 +186,7 @@ document.addEventListener('DOMContentLoaded', function() {
  
         try {
           console.log('send', fileData);
+          tLogBox('send', fileData);
           signalSocketIo.emit('knowledgetalk', fileData);
         } catch (err) {
           if (err instanceof SyntaxError) {
@@ -185,7 +200,7 @@ document.addEventListener('DOMContentLoaded', function() {
       reader.readAsDataURL(fileObj);
     }
   });
- 
+
   signalSocketIo.on('knowledgetalk', function(data) {
     console.log('receive', data);
  
@@ -215,7 +230,10 @@ document.addEventListener('DOMContentLoaded', function() {
         docShare.disabled = true;
         roomId = data.roomId;
         navigator.mediaDevices
-          .getUserMedia({ video: true, audio: false })
+          .getUserMedia({
+              video: true,
+              audio: false
+          })
           .then(stream => {
             localStream = stream;
             localVideo.srcObject = stream;
@@ -224,7 +242,8 @@ document.addEventListener('DOMContentLoaded', function() {
     } 
 
     if(data.eventOp === 'Call' && data.code !== '200'){
-      tTextbox('상대방이 로그인 되어 있지 않습니다.')
+      tTextbox('상대방이 로그인 되어 있지 않습니다.');
+      inputTarget.disabled = false;
     } 
     
     if(data.eventOp === 'FileShareStart' && data.code === '200'){
@@ -251,6 +270,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (data.eventOp === 'SDP') {
       if (data.sdp.type === 'offer') {
         console.log('sdp offer :: ', data)
+        tLogBox('send', data);
         roomId = data.roomId;
         peerCon = new RTCPeerConnection(configuration);
  
@@ -275,6 +295,7 @@ document.addEventListener('DOMContentLoaded', function() {
  
           try {
             console.log('send', ansData);
+            tLogBox('send', ansData);
             signalSocketIo.emit('knowledgetalk', ansData);
           } catch (err) {
             if (err instanceof SyntaxError) {
@@ -302,6 +323,7 @@ document.addEventListener('DOMContentLoaded', function() {
  
       try {
         console.log('send', iceData);
+        tLogBox('send', iceData);
         signalSocketIo.emit('knowledgetalk', iceData);
       } catch (err) {
         if (err instanceof SyntaxError) {
@@ -310,6 +332,23 @@ document.addEventListener('DOMContentLoaded', function() {
           throw err;
         }
       }
+    }
+
+    //상대가 새로고침시 통화 종료
+    if (data.signalOp === 'Presence' && data.action === 'end') {
+      tTextbox('통화가 종료되었습니다.');
+      localVideo.srcObject = null;
+      remoteVideo.srcObject = null;
+      callBtn.disabled = false;
+      inputTarget.disabled = false;
+
+      localStream.getTracks()[0].stop();
+      localStream = null;
+      peerCon.close();
+      peerCon = null;
+
+      let localCtx = localDoc.getContext('2d');
+      localCtx.clearRect(0, 0, localDoc.width, localDoc.height);
     }
   });
  
@@ -328,6 +367,7 @@ document.addEventListener('DOMContentLoaded', function() {
  
     try {
       console.log('send', iceData);
+      tLogBox('send', iceData);
       signalSocketIo.emit('knowledgetalk', iceData);
     } catch (err) {
       if (err instanceof SyntaxError) {
@@ -358,4 +398,13 @@ document.addEventListener('DOMContentLoaded', function() {
       return statusChecked;
   }
   
+  //첨부파일 사이즈 체크(5MB 이하)
+  function checkFileSize(obj) {
+    console.log(obj);
+    let fileSize = obj.size;
+    let maxSize = 5 * 1024 * 1024   //5MB
+    let statusChecked = fileSize > maxSize ? true : false;
+    return statusChecked;
+  }
+
 });

@@ -12,7 +12,6 @@ document.addEventListener('DOMContentLoaded', function () {
     let janustoPeer;
   
     signalSocketIo.on('knowledgetalk', function (data) {
-      //tLogBox('roomId ::::::::::',data.roomId)
 
       tLogBox('receive', data);
       if (!data.eventOp && !data.signalOp) {
@@ -32,11 +31,16 @@ document.addEventListener('DOMContentLoaded', function () {
       }
   
       if (data.eventOp === 'Invite') {
+        tTextbox(data.userId +' 님이 회의 초대 요청이 왔습니다.');
+        if(roomId === 'expired'){
+          roomId = '';
+          tTextbox(data.userId +' 님이 회의초대를 취소했습니다.');
+          return;
+        }
         roomId = data.roomId;
         callBtn.disabled = true;
         joinBtn.disabled = false;
         memberBtn.disabled = true;
-        tTextbox(data.userId +' 님이 회의 초대 요청이 왔습니다.');
       }
   
       if (data.eventOp === 'Call') {
@@ -104,6 +108,12 @@ document.addEventListener('DOMContentLoaded', function () {
         exitBtn.disabled = true;
         memberBtn.disabled = true;
         loginBtn.disabled = true;
+
+        if(!data.roomId){
+          roomId = 'expired';
+          return;
+        }
+
         let callEndData = {
           eventOp: 'ExitRoom',
           reqNo: reqNo,

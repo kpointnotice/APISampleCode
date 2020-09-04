@@ -46,7 +46,6 @@ document.addEventListener('DOMContentLoaded', function () {
   //회의초대 버튼 클릭 이벤트
   callBtn.addEventListener('click', function (e) {
 
-    
     let callData = {
       eventOp: 'Call',
       reqNo: reqNo++,
@@ -297,6 +296,34 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   }
 
+  // 새로고침시 이벤트
+  if (window.performance) {
+    if(localStorage.getItem(document.location.href + 'loginState') === 'login'){
+      if (performance.navigation.type == 1) {
+        let loginData = {
+          eventOp: 'Login',
+          reqNo: reqNo++,
+          userId: inputId.value,
+          userPw: passwordSHA256(inputPw.value),
+          reqDate: nowDate(),
+          deviceType: 'pc'
+        };
+        
+        try {
+          tLogBox('send', loginData); 
+          signalSocketIo.emit('knowledgetalk', loginData);  //signalling server에 로그인 사용자 객체 전달
+        } catch (err) {
+          if (err instanceof SyntaxError) {
+            alert(' there was a syntaxError it and try again : ' + err.message);
+          } else {
+            throw err;
+          }
+        }
+      }
+    }
+  }
+
+
   //통화 데이터 삭제
   function dispose() {
     document.getElementById('multiVideo') ? document.getElementById('multiVideo').remove() : '';
@@ -351,6 +378,7 @@ document.addEventListener('DOMContentLoaded', function () {
         callBtn.disabled = false;
         loginBtn.disabled = true;
         tTextbox('로그인 되었습니다.');
+        localStorage.setItem(document.location.href + 'loginState', 'login');
         } else if (data.code === '111'){
           tTextbox('이미 로그인 중입니다.')
         } else if (data.code !== '200'){
@@ -437,6 +465,7 @@ document.addEventListener('DOMContentLoaded', function () {
           exitBtn.disabled = true;
           joinBtn.disabled = true;
           dispose();
+          location.reload();
         }
         if (data.action === 'join') {
           tTextbox('회의를 시작 하셔도 됩니다.')
@@ -449,6 +478,7 @@ document.addEventListener('DOMContentLoaded', function () {
           loginBtn.disabled = true;
           tTextbox('회의를 종료 하셨습니다.')
           dispose();
+          location.reload();
         }
         break;
     }

@@ -34,9 +34,10 @@ document.addEventListener('DOMContentLoaded', function() {
       roomId = data.roomId;
       joinBtn.disabled = false;
     } 
-    //수정 200
+  
     if (data.eventOp === 'Join' && data.code === '200') {
-      tTextbox('통화가 연결 되었습니다.')
+      tTextbox('통화가 연결 되었습니다.');
+      localStorage.setItem('roomId',data.roomId);
       joinBtn.disabled = true;
       navigator.mediaDevices
         .getUserMedia({ video: true, audio: false })
@@ -67,6 +68,7 @@ document.addEventListener('DOMContentLoaded', function() {
  
             try {
               console.log('send', sdpData);
+              tLogBox('send', sdpData);
               signalSocketIo.emit('knowledgetalk', sdpData);
             } catch (err) {
               if (err instanceof SyntaxError) {
@@ -100,6 +102,7 @@ document.addEventListener('DOMContentLoaded', function() {
  
       try {
         console.log('send', iceData);
+        tLogBox('send', iceData);
         signalSocketIo.emit('knowledgetalk', iceData);
       } catch (err) {
         if (err instanceof SyntaxError) {
@@ -155,6 +158,22 @@ document.addEventListener('DOMContentLoaded', function() {
       let remoteCtx = remoteDoc.getContext('2d');
       remoteCtx.clearRect(0, 0, remoteDoc.width, remoteDoc.height);
     }
+
+    //상대가 새로고침시 통화 종료
+    if (data.signalOp === 'Presence' && data.action === 'end') {
+      tTextbox('통화가 종료되었습니다.');
+      localVideo.srcObject = null;
+      remoteVideo.srcObject = null;
+
+      localStream.getTracks()[0].stop();
+      localStream = null;
+      peerCon.close();
+      peerCon = null;
+
+      let remoteCtx = remoteDoc.getContext('2d');
+      remoteCtx.clearRect(0, 0, remoteDoc.width, remoteDoc.height);
+    }
+
   });
  
   function onIceCandidateHandler(e) {
@@ -172,6 +191,7 @@ document.addEventListener('DOMContentLoaded', function() {
  
     try {
       console.log('send', iceData);
+      tLogBox('send', iceData);
       signalSocketIo.emit('knowledgetalk', iceData);
     } catch (err) {
       if (err instanceof SyntaxError) {
@@ -199,6 +219,7 @@ document.addEventListener('DOMContentLoaded', function() {
  
     try {
       console.log('send', loginData);
+      tLogBox('send', loginData);
       signalSocketIo.emit('knowledgetalk', loginData);
     } catch (err) {
       if (err instanceof SyntaxError) {
@@ -222,6 +243,7 @@ document.addEventListener('DOMContentLoaded', function() {
  
     try {
       console.log('send', joinData);
+      tLogBox('send', joinData);
       signalSocketIo.emit('knowledgetalk', joinData);
     } catch (err) {
       if (err instanceof SyntaxError) {
@@ -231,4 +253,34 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     }
   });
+
+  // 새로고침시 이벤트
+  if (window.performance) {
+    if(localStorage.getItem('roomId') !== null){
+      if (performance.navigation.type == 1) {
+        let callEndData = {
+          eventOp: 'ExitRoom',
+          reqNo: reqNo,
+          userId: inputId.value,
+          reqDate: nowDate(),
+          roomId: localStorage.getItem('roomId')
+        };
+        
+        localStorage.removeItem('roomId');
+        try {
+          signalSocketIo.emit('knowledgetalk', callEndData);
+          if (window.roomId) {
+            window.roomId = null;
+          }
+        } catch (err) {
+          if (err instanceof SyntaxError) {
+            alert('there was a syntaxError it and try again:' + err.message);
+          } else {
+            throw err;
+          }
+        }
+      }
+    }
+  }
+
 });
