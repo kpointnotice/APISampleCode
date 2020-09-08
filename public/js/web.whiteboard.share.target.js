@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', function() {
   const localVideo = document.getElementById('localVideo');
   const remoteVideo = document.getElementById('remoteVideo');
   const whiteboard = document.getElementById('whiteboard');
- 
+
   let reqNo = 1;
   let peerCon;
   let localStream;
@@ -15,90 +15,101 @@ document.addEventListener('DOMContentLoaded', function() {
   let penColor;
   let isDrawing = false;
   let context = whiteboard.getContext('2d');
- 
+
   signalSocketIo.on('knowledgetalk', function(data) {
     tLogBox('receive', data);
- 
+
     if (!data.eventOp && !data.signalOp) {
       tLogBox('error', 'eventOp undefined');
     }
- 
-    if (data.eventOp === 'Login' && data.code ==='200') {
+    //로그인 응답
+    if (data.eventOp === 'Login') {
+      if(data.code !== '200'){
+        tTextbox('아이디 비번을 다시 확인해주세요')
+        return;
+      }
       inputId.disabled = true;
       inputPw.disabled = true;
       loginBtn.disabled = true;
       tTextbox('로그인 되었습니다.')
-    } else if(data.eventOp === 'Login' && data.code !=='200') {
-      tTextbox('아이디 비번을 다시 확인해주세요')
     }
- 
-    if (data.eventOp === 'Invite') {
+    //초대 이벤트 응답
+    else if (data.eventOp === 'Invite') {
       tTextbox(data.userId + '님이 통화를 요청하였습니다.')
       roomId = data.roomId;
       joinBtn.disabled = false;
     }
-    
-    if (data.eventOp === 'Join' && data.code === '200'){
-      tTextbox('통화 연결이 되었습니다.')
-    }  
-
-    if (data.eventOp === 'Join') {
+    //입장 응답
+    else if (data.eventOp === 'Join'){
+      if(data.code !== '200'){
+        tTextbox('통화 연결이 실패 하였습니다.')
+      }
       localVideo.style.display = 'block';
       remoteVideo.style.display = 'block';
       joinBtn.disabled = true;
 
       navigator.mediaDevices
-        .getUserMedia({ video: true, audio: false })
-        .then(stream => {
-          localStream = stream;
-          localVideo.srcObject = localStream;
- 
-          roomId = data.roomId;
-          peerCon = new RTCPeerConnection(configuration);
- 
-          peerCon.onicecandidate = onIceCandidateHandler;
-          peerCon.onaddstream = onAddStreamHandler;
- 
-          peerCon.addStream(localStream);
-          peerCon.createOffer().then(sdp => {
-            peerCon.setLocalDescription(new RTCSessionDescription(sdp));
- 
-            let sdpData = {
-              eventOp: 'SDP',
-              sdp,
-              useMediaSvr: 'N',
-              userId: inputId.value,
-              roomId,
-              reqNo: reqNo++,
-              reqDate: nowDate()
-            };
- 
-            try {
-              tLogBox('send', sdpData);
-              signalSocketIo.emit('knowledgetalk', sdpData);
-            } catch (err) {
-              if (err instanceof SyntaxError) {
-                alert(
-                  ' there was a syntaxError it and try again : ' + err.message
-                );
-              } else {
-                throw err;
+          .getUserMedia({
+            video: true,
+            audio: true
+          })
+          .then(stream => {
+            localStream = stream;
+            localVideo.srcObject = localStream;
+
+            roomId = data.roomId;
+            peerCon = new RTCPeerConnection(configuration);
+            peerCon.onicecandidate = onIceCandidateHandler;
+
+            peerCon.ontrack = onAddStreamHandler;
+            localStream.getTracks().forEach(function (track) {
+              peerCon.addTrack(track, localStream);
+            });
+
+
+            peerCon.createOffer().then(sdp => {
+              peerCon.setLocalDescription(new RTCSessionDescription(sdp));
+
+              let sdpData = {
+                eventOp: 'SDP',
+                sdp,
+                useMediaSvr: 'N',
+                usage: 'cam',
+                userId: inputId.value,
+                roomId,
+                reqNo: reqNo++,
+                reqDate: nowDate()
+              };
+
+              try {
+                tLogBox('send(offerdata)', sdpData);
+                signalSocketIo.emit('knowledgetalk', sdpData);
+              } catch (err) {
+                if (err instanceof SyntaxError) {
+                  alert(
+                      ' there was a syntaxError it and try again : ' + err.message
+                  );
+                } else {
+                  throw err;
+                }
               }
-            }
-          });
-        });
+            })
+          }).catch(err => {
+            alert('카메라 / 마이크 권한을 재설정 하세요.');
+          })
+
+      tTextbox('통화 연결이 되었습니다.')
     }
- 
-    if (data.eventOp === 'SDP') {
+    //SDP 응답
+    else if (data.eventOp === 'SDP') {
       if (data.sdp.type === 'answer') {
         peerCon.setRemoteDescription(new RTCSessionDescription(data.sdp));
       }
     }
- 
-    if (data.eventOp === 'Candidate') {
-      if (!data.candidate) return;
-      peerCon.addIceCandidate(new RTCIceCandidate(data.candidate));
- 
+    //Candidate 응답
+    else if (data.eventOp === 'Candidate') {
+      if (data.candidate) peerCon.addIceCandidate(new RTCIceCandidate(data.candidate));
+
       let iceData = {
         eventOp: 'Candidate',
         roomId: data.roomId,
@@ -106,9 +117,10 @@ document.addEventListener('DOMContentLoaded', function() {
         resDate: nowDate(),
         code: '200'
       };
- 
+
       try {
-        tLogBox('send', iceData);
+        tTextbox('전화 연결이 되었습니다.');
+        tLogBox('send(icedata)', iceData);
         signalSocketIo.emit('knowledgetalk', iceData);
       } catch (err) {
         if (err instanceof SyntaxError) {
@@ -118,67 +130,70 @@ document.addEventListener('DOMContentLoaded', function() {
         }
       }
     }
- 
-    if (data.eventOp === 'WhiteBoardEndSvr') {
+    //화이트보드 종료
+    else if (data.eventOp === 'WhiteBoardEndSvr') {
       context.clearRect(0, 0, whiteboard.width, whiteboard.height);
       whiteboard.style.display = 'none';
     }
- 
-    if (data.signalOp === 'Draw') {
+    //화이트 보드 시작
+    else if (data.signalOp === 'Draw') {
       tTextbox('상대방이 화이트 보드 활성화 하였습니다.')
       setPen(penColor);
 
       let canvasX;
       let canvasY;
- 
+
       if (data.status === 'start') {
+        tTextbox('상대방이 화이트 보드를 시작 하였습니다.');
+        whiteboard.style.display = 'inline-block';
+
         isDrawing = true;
- 
+
         canvasX = data.axisX * (whiteboard.width / data.boardWidth);
         canvasY = data.axisY * (whiteboard.height / data.boardHeight);
- 
+
         context.beginPath();
         context.moveTo(canvasX, canvasY);
       }
-      if (data.status === 'move') {
+      else if (data.status === 'move') {
         if (isDrawing === false) return;
- 
+
         canvasX = data.axisX * (whiteboard.width / data.boardWidth);
         canvasY = data.axisY * (whiteboard.height / data.boardHeight);
- 
+
         context.lineTo(canvasX, canvasY);
         context.stroke();
       }
-      if (data.status === 'end') {
+      else if (data.status === 'end') {
+        whiteboard.style.display = 'inline-block';
         isDrawing = false;
- 
         context.closePath();
       }
     }
- 
-    if (data.signalOp === 'Reset') {
+    //화이트 보드 지우기
+    else if (data.signalOp === 'Reset') {
       tTextbox('화이트 보드 내용을 지웠습니다.')
       context.clearRect(0, 0, whiteboard.width, whiteboard.height);
     }
-
-    if (data.signalOp === 'Color'){
+    //색 변환
+    else if (data.signalOp === 'Color'){
       penColor = data.color
     }
   });
- 
+
   function onIceCandidateHandler(e) {
     if (!e.candidate) return;
- 
+
     let iceData = {
       eventOp: 'Candidate',
       candidate: e.candidate,
       useMediaSvr: 'N',
       userId: inputId.value,
       roomId,
-      reqNo: reqNo++,
-      reqDate: nowDate()
+      reqNo: reqNumber(),
+      reqDate: getDate()
     };
- 
+
     try {
       tLogBox('send', iceData);
       signalSocketIo.emit('knowledgetalk', iceData);
@@ -190,11 +205,11 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     }
   }
- 
+
   function onAddStreamHandler(e) {
     remoteVideo.srcObject = e.stream;
   }
- 
+
   function setPen(color, width) {
     context.globalCompositeOperation = 'source-over';
     context.lineJoin = 'round';
@@ -202,17 +217,17 @@ document.addEventListener('DOMContentLoaded', function() {
     context.strokeStyle = color;
     context.lineWidth = width || '5';
   }
- 
+
   loginBtn.addEventListener('click', function(e) {
     let loginData = {
       eventOp: 'Login',
-      reqNo: reqNo++,
+      reqNo: reqNumber(),
       userId: inputId.value,
       userPw: passwordSHA256(inputPw.value),
-      reqDate: nowDate(),
+      reqDate: getDate(),
       deviceType: 'pc'
     };
- 
+
     try {
       tLogBox('send', loginData);
       signalSocketIo.emit('knowledgetalk', loginData);
@@ -224,17 +239,17 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     }
   });
- 
+
   joinBtn.addEventListener('click', function(e) {
     let joinData = {
       eventOp: 'Join',
-      reqNo: reqNo++,
-      reqDate: nowDate(),
+      reqNo: reqNumber(),
+      reqDate: getDate(),
       userId: inputId.value,
       roomId,
       status: 'accept'
     };
- 
+
     try {
       tLogBox('send', joinData);
       signalSocketIo.emit('knowledgetalk', joinData);

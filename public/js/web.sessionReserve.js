@@ -5,54 +5,83 @@ document.addEventListener('DOMContentLoaded', function() {
     const callBtn = document.getElementById('callBtn');
     const joinBtn = document.getElementById('joinBtn');
     const exitBtn = document.getElementById('exitBtn');
-    let sessionBtn = document.getElementById('sessionBtn')
-   
-   
+    const sessionBtn = document.getElementById('sessionBtn');
+    const sessionCancelBtn = document.getElementById('sessionCancelBtn');
+
     let reqNo = 1;
-   
+
     let kurentoPeer;
-   
+
     signalSocketIo.on('knowledgetalk', function(data) {
-   
-      console.log('receive', data);
-   
+
+      tLogBox('receive', data);
+
       if (!data.eventOp && !data.signalOp) {
         console.log('error', 'eventOp undefined');
       }
-   
+
+      //로그인 응답
       if (data.eventOp === 'Login') {
         loginBtn.disabled = true;
-        callBtn.disabled = false;
+        if(data.userName === 'a1'){
+            callBtn.disabled = false;
+        }
+        tTextbox('로그인이 되었습니다.')
       }
-   
-      if (data.eventOp === 'Invite') {
+      //초대 응답
+      else if (data.eventOp === 'Invite') {
         roomId = data.roomId;
-   
+
         callBtn.disabled = true;
         joinBtn.disabled = false;
       }
-   
-      if (data.eventOp === 'Call') {
-        roomId = data.roomId;
-   
-        exitBtn.disabled = false;
+      //전화걸기 응답
+      else if (data.eventOp === 'Call') {
+          if(data.code === '200'){
+            roomId = data.roomId;
+            callBtn.disabled = true;
+            exitBtn.disabled = false;
+            tTextbox('회의에 초대 중 입니다.')
+          }
+          else {
+              tTextbox('초대 불가능합니다. 다시 시도하시기 바랍니다.')
+          }
       }
-   
-      if (data.eventOp === 'Join') {
-        roomId = data.roomId;
-   
-        joinBtn.disabled = true;
-        exitBtn.disabled = false;
+      //회의참여 응답
+      else if (data.eventOp === 'Join') {
+          tTextbox('회의에 입장 하였습니다.')
+          roomId = data.roomId;
+          joinBtn.disabled = true;
+          exitBtn.disabled = false;
+          sessionBtn.disabled = false;
       }
-   
-      if (data.eventOp === 'SDP') {
+      //공유자원 응답
+      else if (data.eventOp === 'SessionReserve'){
+          if(data.code === '200'){
+              tTextbox('공유자원이 예약되었습니다.');
+              sessionBtn.disabled = true;
+              sessionCancelBtn.disabled = false;
+          } else if (data.code === '440') {
+              tTextbox('이미 예약되어 있습니다.')
+          }
+      }
+      //공유자원 종료 응답
+      else if(data.eventOp === 'SessionReserveEnd'){
+          if(data.code === '200'){
+              tTextbox('공유자원이 해제되었습니다.');
+              sessionCancelBtn.disabled = true;
+              sessionBtn.disabled = false;
+          }
+      }
+      //SDP 응답
+      else if (data.eventOp === 'SDP') {
         if (data.sdp && data.sdp.type === 'answer' && kurentoPeer) {
         }
       }
-   
-      if (data.eventOp === 'Candidate') {
+      //Candidate 응답
+      else if (data.eventOp === 'Candidate') {
         if (!data.candidate) return;
-   
+
         let iceData = {
           eventOp: 'Candidate',
           reqNo: reqNo++,
@@ -63,7 +92,7 @@ document.addEventListener('DOMContentLoaded', function() {
           useMediaSvr: 'Y',
           usage: 'cam'
         };
-   
+
         try {
           console.log('send', iceData);
           signalSocketIo.emit('knowledgetalk', iceData);
@@ -75,22 +104,25 @@ document.addEventListener('DOMContentLoaded', function() {
           }
         }
       }
-   
+      else if (data.signalOp === 'Presence' && data.action === 'join'){
+          tTextbox('회의에 입장 하였습니다.')
+          sessionBtn.disabled = false
+      }
     });
-   
-   
+
+
     loginBtn.addEventListener('click', function(e) {
       let loginData = {
         eventOp: 'Login',
-        reqNo: reqNo++,
+        reqNo: reqNumber(),
         userId: inputId.value,
         userPw: passwordSHA256(inputPw.value),
-        reqDate: nowDate(),
+        reqDate: getDate(),
         deviceType: 'pc'
       };
-   
+
       try {
-        console.log('send', loginData);
+        tLogBox('send', loginData);
         signalSocketIo.emit('knowledgetalk', loginData);
       } catch (err) {
         if (err instanceof SyntaxError) {
@@ -99,24 +131,24 @@ document.addEventListener('DOMContentLoaded', function() {
           throw err;
         }
       }
-   
-      
-   
+
+
+
     });
-   
+
     callBtn.addEventListener('click', function(e) {
       let callData = {
         eventOp: 'Call',
-        reqNo: reqNo++,
+        reqNo: reqNumber(),
         userId: inputId.value,
-        reqDate: nowDate(),
+        reqDate: getDate(),
         reqDeviceType: 'pc',
         serviceType: 'multi',
-        targetId: ['p2', 'p3', 'p4']
+        targetId: ['a2']
       };
-   
+
       try {
-        console.log('send', callData);
+        tLogBox('send', callData);
         signalSocketIo.emit('knowledgetalk', callData);
       } catch (err) {
         if (err instanceof SyntaxError) {
@@ -126,7 +158,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
       }
     });
-   
+
     joinBtn.addEventListener('click', function(e) {
       let joinData = {
         eventOp: 'Join',
@@ -136,9 +168,9 @@ document.addEventListener('DOMContentLoaded', function() {
         roomId,
         status: 'accept'
       };
-   
+
       try {
-        console.log('send', joinData);
+        tLogBox('send', joinData);
         signalSocketIo.emit('knowledgetalk', joinData);
       } catch (err) {
         if (err instanceof SyntaxError) {
@@ -148,17 +180,14 @@ document.addEventListener('DOMContentLoaded', function() {
         }
       }
     });
-   
+
     exitBtn.addEventListener('click', function(e) {
       loginBtn.disabled = false;
       callBtn.disabled = true;
       joinBtn.disabled = true;
       exitBtn.disabled = true;
-      dispose();
     });
-   
-   
-   
+
     sessionBtn.addEventListener('click', function(e){
         let sessionData = {
             eventOp : 'SessionReserve',
@@ -168,7 +197,7 @@ document.addEventListener('DOMContentLoaded', function() {
             roomId
         }
         try {
-          console.log('send', sessionData);
+            tLogBox('send', sessionData);
           signalSocketIo.emit('knowledgetalk', sessionData);
         } catch (err) {
           if (err instanceof SyntaxError) {
@@ -176,6 +205,26 @@ document.addEventListener('DOMContentLoaded', function() {
           } else {
             throw err;
           }
+        }
+    })
+
+    sessionCancelBtn.addEventListener('click', e => {
+        let sessionData = {
+            eventOp : 'SessionReserveEnd',
+            reqNo : reqNumber(),
+            userId : inputId.value,
+            reqDate : getDate(),
+            roomId
+        }
+        try {
+            tLogBox('send', sessionData);
+            signalSocketIo.emit('knowledgetalk', sessionData);
+        } catch (err) {
+            if (err instanceof SyntaxError) {
+                alert(' there was a syntaxError it and try again : ' + err.message);
+            } else {
+                throw err;
+            }
         }
     })
   });

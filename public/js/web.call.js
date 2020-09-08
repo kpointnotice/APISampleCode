@@ -13,19 +13,18 @@ document.addEventListener('DOMContentLoaded', function () {
     let peerCon;
     let configuration = [];
 
-
     loginBtn.addEventListener('click', function (e) {
         let loginData = {
             eventOp: 'Login',
-            reqNo: reqNo++,
+            reqNo: reqNumber(),
             userId: inputId.value,
             userPw: passwordSHA256(inputPw.value),
-            reqDate: nowDate(),
+            reqDate: getDate(),
             deviceType: 'pc'
         };
 
         try {
-            tLogBox('send(login)', loginData);
+            tLogBox('send', loginData);
             signalSocketIo.emit('knowledgetalk', loginData);
         } catch (err) {
             if (err instanceof SyntaxError) {
@@ -40,15 +39,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
         let callData = {
             eventOp: 'Call',
-            reqNo: reqNo++,
-            reqDate: nowDate(),
+            reqNo: reqNumber(),
+            reqDate: getDate(),
             userId: inputId.value,
             targetId: [inputTarget.value],
             reqDeviceType: 'pc'
         };
 
         try {
-            tLogBox('send(call)', callData);
+            tLogBox('send', callData);
             signalSocketIo.emit('knowledgetalk', callData);
         } catch (err) {
             if (err instanceof SyntaxError) {
@@ -84,12 +83,6 @@ document.addEventListener('DOMContentLoaded', function () {
         try {
             tLogBox('send', callEndData);
             signalSocketIo.emit('knowledgetalk', callEndData);
-            if (window.roomId) {
-                peerCon = new RTCPeerConnection(configuration);
-                peerCon.close();
-                peerCon = null;
-                window.roomId = null;
-            }
 
             //추가한부분 : 텍스트박스 내용변경
             tTextbox('전화를 종료했습니다.');
@@ -118,7 +111,7 @@ document.addEventListener('DOMContentLoaded', function () {
         };
 
         try {
-            tLogBox('send(onIceCandidateHandler)', iceData);
+            tLogBox('send', iceData);
             signalSocketIo.emit('knowledgetalk', iceData);
         } catch (err) {
             if (err instanceof SyntaxError) {
@@ -139,19 +132,27 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!data.eventOp && !data.signalOp) {
             tLogBox('error', 'eventOp undefined');
         }
-
+        //로그인 응답
         if (data.eventOp === 'Login') {
+            if(data.code !== '200'){
+                tTextbox('아이디 또는 비밀번호를 확인하세요.');
+                return;
+            }
             loginBtn.disabled = true;
             callBtn.disabled = false;
             tTextbox('로그인 되었습니다');
         }
-
-        if (data.eventOp === 'Call') {
-            if (data.message !== 'OK') {
-                tTextbox(`상대방(${inputTarget.value})이 로그인 되어 있지 않습니다!`)
+        //전화걸기 응답
+        else if (data.eventOp === 'Call') {
+            if (data.code !== '200') {
+                tTextbox(`상대방(${inputTarget.value})이 로그인 되어 있지 않습니다! 새로고침 후 다시 로그인 하시기 바랍니다.`);
+                callBtn.disabled = true
                 return;
             }
 
+            tTextbox(`상대방(${inputTarget.value})에게 전화를 거는 중 입니다.`)
+
+            //turn 서버 정보 저장
             configuration.push({
                 urls: data.serverInfo['_j'].turn_url,
                 credential: data.serverInfo['_j'].turn_credential,
@@ -159,7 +160,7 @@ document.addEventListener('DOMContentLoaded', function () {
             });
 
             callBtn.disabled = true;
-            exitBtn.disabled = false;
+
             navigator.mediaDevices
                 .getUserMedia({
                     video: true,
@@ -168,19 +169,24 @@ document.addEventListener('DOMContentLoaded', function () {
                 .then(stream => {
                     localStream = stream;
                     localVideo.srcObject = stream;
-                });
+                }).catch(err => {
+                    alert('카메라 또 마이크를 활성화 해주시기 바랍니다.')
+                })
         }
-
-        if (data.eventOp == 'SDP') {
+        //SDP 응답
+        else if (data.eventOp == 'SDP') {
             if (data.sdp && data.sdp.type === 'offer') {
 
                 roomId = data.roomId;
                 peerCon = new RTCPeerConnection(configuration);
 
                 peerCon.onicecandidate = onIceCandidateHandler;
-
-
                 peerCon.ontrack = onAddStreamHandler;
+                peerCon.onconnectionstatechange = e => {
+                    tTextbox('전화가 연결 되었습니다.')
+                    exitBtn.disabled = false;
+                }
+
                 localStream.getTracks().forEach(function (track) {
                     peerCon.addTrack(track, localStream);
                 });
@@ -201,7 +207,6 @@ document.addEventListener('DOMContentLoaded', function () {
                     };
 
                     try {
-                        console.log('sdp answer data ', ansData);
                         signalSocketIo.emit('knowledgetalk', ansData);
                     } catch (err) {
                         if (err instanceof SyntaxError) {
@@ -215,8 +220,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 });
             }
         }
-
-        if (data.eventOp === 'Candidate') {
+        //Candidate 응답
+        else if (data.eventOp === 'Candidate') {
             if (data.candidate) peerCon.addIceCandidate(new RTCIceCandidate(data.candidate));
 
             let iceData = {
@@ -228,8 +233,6 @@ document.addEventListener('DOMContentLoaded', function () {
             };
 
             try {
-                tTextbox('전화 연결이 되었습니다.');
-                tLogBox('send(candidate)', iceData);
                 signalSocketIo.emit('knowledgetalk', iceData);
             } catch (err) {
                 if (err instanceof SyntaxError) {
@@ -239,8 +242,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             }
         }
-
-        if (data.signalOp === 'Presence' && data.action === 'exit') {
+        //Presence 응답
+        else if (data.signalOp === 'Presence' && data.action === 'exit') {
             localStream.getTracks()[0].stop();
             localStream.getTracks()[1].stop();
             localStream = null;
@@ -250,10 +253,10 @@ document.addEventListener('DOMContentLoaded', function () {
             localVideo.srcObject = null;
             remoteVideo.srcObject = null;
 
-            callBtn.disabled = false;
+            callBtn.disabled = true;
             exitBtn.disabled = true;
+            tTextbox('통화가 종료되었습니다.')
         }
 
     });
-
 })

@@ -6,18 +6,19 @@ document.addEventListener('DOMContentLoaded', function () {
     const joinBtn = document.getElementById('joinBtn');
     const exitBtn = document.getElementById('exitBtn');
     const memberBtn = document.getElementById('memberBtn')
-  
+
     let reqNo = 1;
-  
+
     let janustoPeer;
-  
+    let roomId;
+
     signalSocketIo.on('knowledgetalk', function (data) {
 
       tLogBox('receive', data);
       if (!data.eventOp && !data.signalOp) {
         tLogBox('error', 'eventOp undefined');
       }
-  
+
       if (data.eventOp === 'Login') {
         loginBtn.disabled = true;
         callBtn.disabled = false;
@@ -25,11 +26,11 @@ document.addEventListener('DOMContentLoaded', function () {
       }
 
       if(data.signalOp === 'Presence' && data.action === 'join'){
-        tTextbox('회의를 시작하세요')
+        tTextbox('회의를 시작합니다.')
         callBtn.disabled = true;
         memberBtn.disabled = false;
       }
-  
+
       if (data.eventOp === 'Invite') {
         tTextbox(data.userId +' 님이 회의 초대 요청이 왔습니다.');
         if(roomId === 'expired'){
@@ -42,7 +43,7 @@ document.addEventListener('DOMContentLoaded', function () {
         joinBtn.disabled = false;
         memberBtn.disabled = true;
       }
-  
+
       if (data.eventOp === 'Call') {
         roomId = data.roomId;
         exitBtn.disabled = false;
@@ -55,16 +56,16 @@ document.addEventListener('DOMContentLoaded', function () {
         memberBtn.disabled = false;
         tTextbox('회의를 시작하세요.')
       }
-  
+
       if (data.eventOp === 'SDP') {
         if (data.sdp && data.sdp.type === 'answer' && janustoPeer) {
           janustoPeer.processAnswer(data.sdp.sdp);
         }
       }
-  
+
       if (data.eventOp === 'Candidate') {
         if (!data.candidate) return;
-  
+
         let iceData = {
           eventOp: 'Candidate',
           reqNo: reqNo++,
@@ -75,7 +76,7 @@ document.addEventListener('DOMContentLoaded', function () {
           useMediaSvr: 'Y',
           usage: 'cam'
         };
-  
+
         try {
           tLogBox('send', iceData);
           signalSocketIo.emit('knowledgetalk', iceData);
@@ -87,7 +88,7 @@ document.addEventListener('DOMContentLoaded', function () {
           }
         }
       }
-      
+
       //참여자 확인
       if (data.eventOp === 'ConferenceMemberList') {
         tLogBox('receive(memberlist)', data.result);
@@ -138,9 +139,9 @@ document.addEventListener('DOMContentLoaded', function () {
       if(data.eventOp === 'ExitRoom' && data.code === '561'){
         joinBtn.disabled = true;
       }
-      
+
     });
-    
+
     //로그인 버튼 클릭시
     loginBtn.addEventListener('click', function (e) {
       let loginData = {
@@ -151,7 +152,7 @@ document.addEventListener('DOMContentLoaded', function () {
         reqDate: nowDate(),
         deviceType: 'pc'
       };
-  
+
       try {
         tLogBox('send', loginData);
         signalSocketIo.emit('knowledgetalk', loginData);
@@ -163,7 +164,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
       }
     });
-  
+
     //회의 초대 버튼
     callBtn.addEventListener('click', function (e) {
       let callData = {
@@ -175,7 +176,7 @@ document.addEventListener('DOMContentLoaded', function () {
         serviceType: 'multi',
         targetId: ['apple','melon']
       };
-  
+
       try {
         tLogBox('send', callData);
         tTextbox(callData.targetId[0]+'님을 초대 중입니다.')
@@ -189,7 +190,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
       }
     });
-  
+
     //회의 참여 버튼
     joinBtn.addEventListener('click', function (e) {
       let joinData = {
@@ -200,7 +201,7 @@ document.addEventListener('DOMContentLoaded', function () {
         roomId,
         status: 'accept'
       };
-  
+
       try {
         tLogBox('send', joinData);
         signalSocketIo.emit('knowledgetalk', joinData);
@@ -212,7 +213,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
       }
     });
-  
+
     //회의 종료 버튼
     exitBtn.addEventListener('click', function (e) {
       loginBtn.disabled = true;
@@ -241,8 +242,8 @@ document.addEventListener('DOMContentLoaded', function () {
         }
       }
     });
-  
-    // 참여 확인 버튼 
+
+    // 참여 확인 버튼
     memberBtn.addEventListener('click', function (e) {
       let memberData = {
         eventOp: 'ConferenceMemberList',

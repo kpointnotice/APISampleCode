@@ -3,7 +3,6 @@
   <head>
     <meta charset='UTF-8' />
     <meta name='viewport' content='width=device-width, initial-scale=1.0' />
-    <meta http-equiv='X-UA-Compatible' content='ie=edge' />
     <link rel="stylesheet" href="./css/wrap.css">
     <title>Sample Consulting Web</title>
   </head>
@@ -24,18 +23,18 @@
     </div>
 
     <canvas id='whiteboard' width='300' height='300' style='display: none; border: solid black 1px;'></canvas>
-    
-    <video id='localVideo' autoplay muted style='display: none; height: 100px;'></video>
-    <video id='remoteVideo' autoplay style='display: none; height: 100px;'></video>
+
+    <video id='localVideo' autoplay muted style='height: 100px;'></video>
+    <video id='remoteVideo' autoplay style='height: 100px;'></video>
 
     <div class='message'>
       <div id='text_print_Box'></div>
     </div>
-    
+
     <!--로그-->
     <div id='printBox'> </div>
 
-    <script src='http://localhost:5000/lib/socket.io.js'></script>
+    <script src='https://106.240.247.44:7101/socket.io/socket.io.js'></script>
     <script src='./lib/common.js'></script>
     <script src='./js/web.whiteboard.share.js'></script>
   </body>

@@ -16,15 +16,15 @@ document.addEventListener('DOMContentLoaded', function () {
     loginBtn.addEventListener('click', function (e) {
         let loginData = {
             eventOp: 'Login',
-            reqNo: reqNo++,
+            reqNo: reqNumber(),
             userId: inputId.value,
             userPw: passwordSHA256(inputPw.value),
-            reqDate: nowDate(),
+            reqDate: getDate(),
             deviceType: 'pc'
         };
 
         try {
-            tLogBox('send(login)', loginData);
+            tLogBox('send', loginData);
             signalSocketIo.emit('knowledgetalk', loginData);
         } catch (err) {
             if (err instanceof SyntaxError) {
@@ -38,15 +38,15 @@ document.addEventListener('DOMContentLoaded', function () {
     joinBtn.addEventListener('click', function (e) {
         let joinData = {
             eventOp: 'Join',
-            reqNo: reqNo++,
-            reqDate: nowDate(),
+            reqNo: reqNumber(),
+            reqDate: getDate(),
             userId: inputId.value,
             roomId,
             status: 'accept'
         };
 
         try {
-            tLogBox('send(join)', joinData);
+            tLogBox('send', joinData);
             signalSocketIo.emit('knowledgetalk', joinData);
         } catch (err) {
             if (err instanceof SyntaxError) {
@@ -81,14 +81,9 @@ document.addEventListener('DOMContentLoaded', function () {
             tLogBox('send', callEndData);
             signalSocketIo.emit('knowledgetalk', callEndData);
 
-            //추가한부분(신윤호) : 전화받기 버튼 비활성화, 텍스트박스 처리
             joinBtn.disabled = true;
             tTextbox('전화를 종료했습니다.');
-            //
 
-            if (window.roomId) {
-                window.roomId = null;
-            }
         } catch (err) {
             if (err instanceof SyntaxError) {
                 alert('there was a syntaxError it and try again:' + err.message);
@@ -108,12 +103,12 @@ document.addEventListener('DOMContentLoaded', function () {
             usage: 'cam',
             userId: inputId.value,
             roomId,
-            reqNo: reqNo++,
-            reqDate: nowDate()
+            reqNo: reqNumber(),
+            reqDate: getDate()
         };
 
         try {
-            tLogBox('send(onIceCandidateHandler)', iceData);
+            tLogBox('send', iceData);
             signalSocketIo.emit('knowledgetalk', iceData);
         } catch (err) {
             if (err instanceof SyntaxError) {
@@ -135,12 +130,17 @@ document.addEventListener('DOMContentLoaded', function () {
             tLogBox('error', 'eventOp undefined');
         }
 
+        //로그인 응답
         if (data.eventOp === 'Login') {
+            if(data.code !== '200'){
+                tTextbox('아이디 또는 비밀번호를 확인하세요.');
+                return;
+            }
             loginBtn.disabled = true;
             tTextbox('로그인 되었습니다.');
         }
-
-        if (data.eventOp === 'Invite') {
+        //Invite Event 응답
+        else if (data.eventOp === 'Invite') {
             tTextbox(`${data.userId} 에게 전화가 왔습니다.`)
             roomId = data.roomId;
             joinBtn.disabled = false;
@@ -151,8 +151,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 username: data.serverInfo['_j'].turn_username
             });
         }
-
-        if (data.eventOp === 'Join') {
+        //전화 받기 응답
+        else if (data.eventOp === 'Join') {
             joinBtn.disabled = true;
             exitBtn.disabled = false;
 
@@ -204,18 +204,18 @@ document.addEventListener('DOMContentLoaded', function () {
                     })
                 }).catch(err => {
                     exitBtn.disabled = true;
-                    let refreshCheck = confirm('카메라 / 마이크 권한을 재 설정 하세요.');
+                    let refreshCheck = confirm('카메라 / 마이크 권한을 재설정 하세요.');
                     if (refreshCheck) {
                         window.location.reload()
                     }
                 })
         }
-
-        if (data.eventOp === 'SDP' && data.sdp && data.sdp.type === 'answer') {
+        //SDP 응답
+        else if (data.eventOp === 'SDP' && data.sdp && data.sdp.type === 'answer') {
             peerCon.setRemoteDescription(data.sdp);
         }
-
-        if (data.eventOp === 'Candidate') {
+        //Candidate 응답
+        else if (data.eventOp === 'Candidate') {
             if (data.candidate) peerCon.addIceCandidate(new RTCIceCandidate(data.candidate));
 
             let iceData = {
@@ -238,8 +238,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             }
         }
-
-        if (data.signalOp == 'Presence' && data.action == 'end') {
+        //Presence 응답
+        else if (data.signalOp == 'Presence' && data.action == 'end') {
             if (localStream && peerCon) {
                 localStream.getTracks()[0].stop();
                 localStream.getTracks()[1].stop();
@@ -252,8 +252,10 @@ document.addEventListener('DOMContentLoaded', function () {
             localVideo.srcObject = null;
             remoteVideo.srcObject = null;
 
-            joinBtn.disabled = false;
+            joinBtn.disabled = true;
             exitBtn.disabled = true;
+
+            tTextbox('통화가 종료되었습니다.')
         }
 
 

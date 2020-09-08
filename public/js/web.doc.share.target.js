@@ -6,36 +6,43 @@ document.addEventListener('DOMContentLoaded', function() {
   const localVideo = document.getElementById('localVideo');
   const remoteVideo = document.getElementById('remoteVideo');
   const remoteDoc = document.getElementById('remoteDoc');
- 
+
   let reqNo = 1;
   let peerCon;
   let localStream;
   let roomId;
   let configuration;
- 
+
   signalSocketIo.on('knowledgetalk', function(data) {
-    console.log('receive', data);
- 
+    tLogBox('receive', data);
+
     if (!data.eventOp && !data.signalOp) {
       console.log('error', 'eventOp undefined');
     }
-    
-    if(data.eventOp === 'Login' && data.code === '200'){
+
+    //로그인 응답
+    if(data.eventOp === 'Login'){
+      if(data.code !== '200'){
+        tTextbox('아이디 비밀번호를 확인해주세요.')
+        return;
+      }
       tTextbox('로그인 되었습니다.')
       inputId.disabled = true;
       inputPw.disabled = true;
       loginBtn.disabled = true;
     }
-    if(data.eventOp === 'Login' && data.code !== '200'){
-      tTextbox('아이디 비밀번호를 확인해주세요.')
-    }
-    if (data.eventOp === 'Invite') {
+    //초대 이벤트 응답
+    else if (data.eventOp === 'Invite') {
       tTextbox(data.userId+'님이 통화를 요청합니다.')
       roomId = data.roomId;
       joinBtn.disabled = false;
-    } 
-  
-    if (data.eventOp === 'Join' && data.code === '200') {
+    }
+    //Join 응답
+    else if (data.eventOp === 'Join') {
+      if(data.code !== '200'){
+        tTextbox('통화가 연결되지 않았습니다.')
+        return;
+      }
       tTextbox('통화가 연결 되었습니다.');
       localStorage.setItem('roomId',data.roomId);
       joinBtn.disabled = true;
@@ -44,17 +51,17 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(stream => {
           localStream = stream;
           localVideo.srcObject = localStream;
- 
+
           roomId = data.roomId;
           peerCon = new RTCPeerConnection(configuration);
- 
+
           peerCon.onicecandidate = onIceCandidateHandler;
           peerCon.onaddstream = onAddStreamHandler;
- 
+
           peerCon.addStream(localStream);
           peerCon.createOffer().then(sdp => {
             peerCon.setLocalDescription(new RTCSessionDescription(sdp));
- 
+
             let sdpData = {
               eventOp: 'SDP',
               sdp,
@@ -65,33 +72,32 @@ document.addEventListener('DOMContentLoaded', function() {
               usage: 'cam',
               reqDate: nowDate()
             };
- 
+
             try {
-              console.log('send', sdpData);
               tLogBox('send', sdpData);
               signalSocketIo.emit('knowledgetalk', sdpData);
             } catch (err) {
               if (err instanceof SyntaxError) {
-                alert(
-                  ' there was a syntaxError it and try again : ' + err.message
-                );
+                alert(' there was a syntaxError it and try again : ' + err.message);
               } else {
                 throw err;
               }
             }
           });
-        });
+        }).catch(err => {
+          alert('카메라 또는 마이크를 재설정 하시기 바랍니다.')
+      })
     }
- 
-    if (data.eventOp === 'SDP') {
+    //SDP 응답
+    else if (data.eventOp === 'SDP') {
       if (data.sdp.type === 'answer') {
         peerCon.setRemoteDescription(new RTCSessionDescription(data.sdp));
       }
     }
- 
-    if (data.eventOp === 'Candidate') {
+    //Candidate 응답
+    else if (data.eventOp === 'Candidate') {
       peerCon.addIceCandidate(new RTCIceCandidate(data.candidate));
- 
+
       let iceData = {
         eventOp: 'Candidate',
         roomId: data.roomId,
@@ -99,7 +105,7 @@ document.addEventListener('DOMContentLoaded', function() {
         resDate: nowDate(),
         code: '200'
       };
- 
+
       try {
         console.log('send', iceData);
         tLogBox('send', iceData);
@@ -112,16 +118,15 @@ document.addEventListener('DOMContentLoaded', function() {
         }
       }
     }
- 
     //문서 공유 시작 전달
-    if (data.eventOp === 'FileShareStartSvr') {
+    else if (data.eventOp === 'FileShareStartSvr') {
       tTextbox('상대방이 문서를 공유했습니다.')
       let remoteImage = new Image();
- 
+
       //캔버스에 이미지 그리기
       remoteImage.addEventListener('load', function() {
         let remoteCtx = remoteDoc.getContext('2d');
- 
+
         remoteCtx.drawImage(
           remoteImage,
           0,
@@ -130,17 +135,16 @@ document.addEventListener('DOMContentLoaded', function() {
           remoteDoc.height
         );
       });
- 
+
       remoteImage.src = data.fileInfoList.url;
     }
-    
     //문서 공유 클릭전달
-    if (data.eventOp === 'FileShareSvr') {
+    else if (data.eventOp === 'FileShareSvr') {
       let remoteImage = new Image();
- 
+
       remoteImage.addEventListener('load', function() {
         let remoteCtx = remoteDoc.getContext('2d');
- 
+
         remoteCtx.drawImage(
           remoteImage,
           0,
@@ -149,18 +153,16 @@ document.addEventListener('DOMContentLoaded', function() {
           remoteDoc.height
         );
       });
- 
+
       remoteImage.src = data.fileUrl;
     }
-    
     //문서 공유 종료 전달
-    if (data.eventOp === 'FileShareEndSvr') {
+    else if (data.eventOp === 'FileShareEndSvr') {
       let remoteCtx = remoteDoc.getContext('2d');
       remoteCtx.clearRect(0, 0, remoteDoc.width, remoteDoc.height);
     }
-
     //상대가 새로고침시 통화 종료
-    if (data.signalOp === 'Presence' && data.action === 'end') {
+    else if (data.signalOp === 'Presence' && data.action === 'end') {
       tTextbox('통화가 종료되었습니다.');
       localVideo.srcObject = null;
       remoteVideo.srcObject = null;
@@ -175,10 +177,10 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
   });
- 
+
   function onIceCandidateHandler(e) {
     if (!e.candidate) return;
- 
+
     let iceData = {
       eventOp: 'Candidate',
       candidate: e.candidate,
@@ -188,7 +190,7 @@ document.addEventListener('DOMContentLoaded', function() {
       reqNo: reqNo++,
       reqDate: nowDate()
     };
- 
+
     try {
       console.log('send', iceData);
       tLogBox('send', iceData);
@@ -201,11 +203,11 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     }
   }
- 
+
   function onAddStreamHandler(e) {
     remoteVideo.srcObject = e.stream;
   }
- 
+
   //로그인버튼 클릭 이벤트
   loginBtn.addEventListener('click', function(e) {
     let loginData = {
@@ -216,7 +218,7 @@ document.addEventListener('DOMContentLoaded', function() {
       reqDate: nowDate(),
       deviceType: 'pc'
     };
- 
+
     try {
       console.log('send', loginData);
       tLogBox('send', loginData);
@@ -240,7 +242,7 @@ document.addEventListener('DOMContentLoaded', function() {
       roomId,
       status: 'accept'
     };
- 
+
     try {
       console.log('send', joinData);
       tLogBox('send', joinData);
@@ -265,7 +267,7 @@ document.addEventListener('DOMContentLoaded', function() {
           reqDate: nowDate(),
           roomId: localStorage.getItem('roomId')
         };
-        
+
         localStorage.removeItem('roomId');
         try {
           signalSocketIo.emit('knowledgetalk', callEndData);

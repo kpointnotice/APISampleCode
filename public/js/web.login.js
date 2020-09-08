@@ -9,11 +9,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
     signalSocketIo.on('knowledgetalk', function (data) {
         tLogBox('receive', data);
-     
+
         if (!data.eventOp && !data.signalOp) {
             tLogBox('error', 'eventOp undefined');
+            return;
         }
-        
+
         //로그인 이벤트
         if( data.eventOp === 'Login' && data.code === '200'){
             tTextbox('로그인 되었습니다.')
@@ -45,7 +46,6 @@ document.addEventListener('DOMContentLoaded', function () {
             reqDate: nowDate(),
             userId: inputId.value,
             userPw: passwordSHA256(inputPw.value),
-            reqDate: nowDate(),
             deviceType: 'pc'
         };
 

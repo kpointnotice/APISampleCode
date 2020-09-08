@@ -24,13 +24,20 @@ document.addEventListener('DOMContentLoaded', function () {
   signalSocketIo.on('knowledgetalk', function (data) {
     tLogBox('receive', data);
 
-    switch (data.eventOp) {
+    switch (data.eventOp || data.signalOp) {
       case 'Login':
-        if (callBtn.disabled)
+        if (data.code !== '200'){
+          tTextbox('아이디 또는 비밀번호를 확인하세요.');
+        }
+        else {
+          tTextbox('로그인 되었습니다.');
+          loginBtn.disabled = true;
           callBtn.disabled = false;
+        }
         break;
 
       case 'Invite':
+        tTextbox('회의에 초대 되었습니다.')
         roomId = data.roomId;
         callBtn.disabled = true;
         joinBtn.disabled = false;
@@ -45,8 +52,9 @@ document.addEventListener('DOMContentLoaded', function () {
         if (data.code !== '200') {
           tLogBox('Call err : ', data);
         } else if (data.status === 'accept') {
+          tTextbox('연결 중입니다...')
           if (data.isSfu === true) {
-            createSDPOffer(data.videoWidth, data.videoHeight, data.videoFramerate, roomId); // peer 생성 
+            createSDPOffer(data.videoWidth, data.videoHeight, data.videoFramerate, roomId); // peer 생성
           } else {
 
           }
@@ -58,9 +66,9 @@ document.addEventListener('DOMContentLoaded', function () {
         roomId = data.roomId;
         exitBtn.disabled = false;
         if (data.code !== '200') {
-          tLogBox('join err : ', data);
+          tTextbox('연결을 실패하였습니다. 다시 시도해주시기 바랍니다.')
         } else {
-          tLogBox('join data ################  ', data);
+          tTextbox('연결 되었습니다.')
           if (data.useMediaSvr === 'Y') {
             createSDPOffer(data.videoHeight, data.videoWidth, data.videoFramerate, roomId);
           }
@@ -107,8 +115,6 @@ document.addEventListener('DOMContentLoaded', function () {
           tLogBox('SessionReserve error');
         } else {
           if (data.multiType === 'Y') {
-            tLogBox('SessionReserve   ##### ', data);
-            console.log('createScreenShareSdpOffer function start')
             createScreenShereSdpOffer();
           }
         }
@@ -139,6 +145,16 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         break;
 
+      case 'Presence':
+        if(data.action === 'join'){
+          tTextbox(`연결이 되었습니다.`)
+        }
+        else if(data.action === 'end'){
+          tTextbox('연결이 종료되었습니다.')
+          dispose()
+        }
+        break;
+
     }
   });
 
@@ -150,7 +166,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
       janusScreenShareStreamPeer = new RTCPeerConnection(configuration);
       tLogBox('peer connection ::: ', janusScreenShareStreamPeer);
-      console.log('peer connection ::: ', janusScreenShareStreamPeer);
 
       janusScreenShareStreamPeer.ontrack = (e) => {
         tLogBox('check', e);
@@ -172,7 +187,7 @@ document.addEventListener('DOMContentLoaded', function () {
           candidate: e.candidate,
           isSfu: true
         }
-        tLogBox(' ###  Candidate Answer send #### ', sendData);
+        tLogBox('send', sendData);
         signalSocketIo.emit('knowledgetalk', sendData);
       }
 
@@ -245,7 +260,7 @@ document.addEventListener('DOMContentLoaded', function () {
           candidate: e.candidate,
           isSfu: true
         }
-        tLogBox(' ###  Candidate Offer send #### ', sendData);
+        tLogBox('send', sendData);
         signalSocketIo.emit('knowledgetalk', sendData);
       }
 
@@ -426,53 +441,85 @@ document.addEventListener('DOMContentLoaded', function () {
     let multiVideoBox = document.querySelector('#VIDEOONETOMANY');
     try {
       let displayId = data.displayId;
+
       janusRemoteStreamPeers[displayId] = new RTCPeerConnection(configuration);
 
-      janusRemoteStreamPeers[displayId].ontrack = function (e) {
-        janusRemoteStreams[displayId] = e.streams[0];
+      janusRemoteStreamPeers[displayId].onaddstream = function (e) {
+
+        janusRemoteStreams[displayId] = e.stream;
         streamSize = Object.keys(janusRemoteStreams).length;
         let videoTagClassName;
-        if (streamSize > 0 && streamSize <= 4) {
+        if (streamSize > 0 && streamSize <= 3) {
           videoTagClassName = 'video-twobytwo';
+        } else if (streamSize > 3 && streamSize <= 8) {
+          videoTagClassName = 'video-threebythree';
+        } else if (streamSize > 8) {
+          videoTagClassName = 'video-fourbyfour';
         }
 
         let videoContainner = document.createElement('dd');
         videoContainner.classList = 'multi-video';
 
-        if (!document.getElementById('multiVideo-' + data.displayId)) {
+        let multiVideo = document.createElement('video');
+        multiVideo.autoplay = true;
+        multiVideo.setAttribute('width', '150');
+        multiVideo.setAttribute('height', '150');
+        multiVideo.srcObject = janusRemoteStreams[displayId];
+        multiVideo.id = 'multiVideo-' + data.displayId;
 
-          let multiVideo = document.createElement('video');
-          multiVideo.autoplay = true;
-          multiVideo.srcObject = janusRemoteStreams[displayId];
-          multiVideo.id = 'multiVideo-' + data.displayId;
-
-          videoContainner.appendChild(multiVideo);
-          multiVideoBox.classList = videoTagClassName;
-          multiVideoBox.appendChild(videoContainner);
-        }
+        videoContainner.appendChild(multiVideo);
+        multiVideoBox.classList = videoTagClassName;
+        multiVideoBox.appendChild(videoContainner);
       }
-
 
       await janusRemoteStreamPeers[displayId].setRemoteDescription(new RTCSessionDescription(data.sdp));
       let answerSdp = await janusRemoteStreamPeers[displayId].createAnswer();
       await janusRemoteStreamPeers[displayId].setLocalDescription(answerSdp);
+      janusRemoteStreamPeers[displayId].onicegatheringstatechange = async (ev) => {
+        let connection = ev.target;
 
-      let sdpData = {
-        eventOp: 'SDP',
-        reqNo: reqNo++,
-        userId: inputId.value,
-        reqDate: nowDate(),
-        sdp: answerSdp,
-        roomId: data.roomId,
-        useMediaSvr: 'Y',
-        usage: 'cam',
-        isSfu: true,
-        pluginId: data.pluginId
+        switch (connection.iceGatheringState) {
+          case 'gathering':
+            break;
+          case 'complete':    //상대방 id SDP요청
+            let sdpData = {
+              eventOp: 'SDP',
+              reqNo: reqNo++,
+              userId: inputId.value,
+              reqDate: nowDate(),
+              sdp: connection.localDescription,
+              roomId: data.roomId,
+              useMediaSvr: 'Y',
+              usage: 'cam', //통신화면이 통화인지 화면 공유 상태인지
+              isSfu: true,
+              pluginId: data.pluginId  //SFU방식에서 제공해주는 ID의 값
+            };
+
+            tLogBox('send', sdpData);
+            signalSocketIo.emit('knowledgetalk', sdpData);
+            break;
+        }
+      }
+
+      janusRemoteStreamPeers[displayId].oniceconnectionstatechange = (e) => {
+        //통화 종료에 대한 처리
+        if ((janusRemoteStreamPeers[displayId] && janusRemoteStreamPeers[displayId].iceConnectionState === 'disconnected') ||
+            (janusRemoteStreamPeers[displayId] && janusRemoteStreamPeers[displayId].iceConnectionState === 'failed') ||
+            (janusRemoteStreamPeers[displayId] && janusRemoteStreamPeers[displayId].iceConnectionState === 'closed')) {
+
+          janusRemoteStreamPeers[displayId].close();
+          janusRemoteStreamPeers[displayId] = null;
+          delete janusRemoteStreamPeers[displayId];
+
+          let multiVideo = null;
+          if (data.displayId.indexOf('screenshare-') > -1) {
+            multiVideo = document.getElementById(displayId);
+          } else {
+            multiVideo = document.getElementById('multiVideo-' + displayId);
+          }
+          multiVideo ? multiVideo.srcObject = null : '';
+        }
       };
-
-      tLogBox('#### answerSdp SEND ###', sdpData);
-      signalSocketIo.emit('knowledgetalk', sdpData);
-
     } catch (err) {
       tLogBox(err)
     }
@@ -509,7 +556,7 @@ document.addEventListener('DOMContentLoaded', function () {
       reqDate: nowDate(),
       reqDeviceType: 'pc',
       serviceType: 'multi',
-      targetId: ['apple', 'orange', 'melon'],
+      targetId: ['a6', 'a7'],
       isSfu: true
     };
 
@@ -549,7 +596,7 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 
   shareBtn.addEventListener('click', function (e) {
-
+    shareBtn.disabled = true;
     let shareData = {
       eventOp: 'SessionReserve',
       reqNo: reqNo++,
@@ -559,7 +606,7 @@ document.addEventListener('DOMContentLoaded', function () {
     };
 
     try {
-      tLogBox('### shareData send ### ', shareData);
+      tLogBox('send ', shareData);
       signalSocketIo.emit('knowledgetalk', shareData);
     } catch (err) {
       if (err instanceof SyntaxError) {
@@ -571,10 +618,9 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 
   exitBtn.addEventListener('click', function (e) {
-    loginBtn.disabled = false;
-    callBtn.disabled = true;
-    joinBtn.disabled = true;
-    exitBtn.disabled = true;
+
+    dispose();
+    tTextbox('연결이 종료되었습니다.')
 
     let sendData = {
       eventOp: 'ExitRoom',
@@ -596,7 +642,62 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     }
 
-    window.location.reload();
   });
+
+  function dispose() {
+    loginBtn.disabled = true;
+    callBtn.disabled = true;
+    joinBtn.disabled = true;
+    exitBtn.disabled = true;
+
+    document.getElementById('multiVideo') ? document.getElementById('multiVideo').remove() : '';
+
+    let multiVideo = document.getElementById('multiVideo-local');
+    if(janusLocalStream && janusLocalStream.getTracks()) {
+      janusLocalStream.getTracks()[0].stop();
+      janusLocalStream.getTracks()[1].stop();
+      janusLocalStream = null;
+    }
+    if (multiVideo) multiVideo.srcObject = null;
+
+    let multiVideoBox = document.querySelector('#VIDEOONETOMANY');
+    multiVideoBox.style.display = 'none';
+
+    let screenVideo = document.getElementById('ScreenSharingVideo');
+    screenVideo.style.display = 'none';
+
+    if (janusLocalStreamPeer) {
+      janusLocalStreamPeer.close();
+      janusLocalStreamPeer = null;
+    }
+
+    if(janusScreenShareStreamPeer){
+      janusScreenShareStreamPeer.close();
+      janusScreenShareStreamPeer = null;
+    }
+
+
+    for (let key in janusRemoteStreams) {
+      if (janusRemoteStreams[key] && janusRemoteStreams[key].getTracks()) {
+        janusRemoteStreams[key].getTracks()[0].stop();
+        janusRemoteStreams[key].getTracks()[1].stop();
+        janusRemoteStreams[key] = null;
+        delete janusRemoteStreams[key];
+      }
+    }
+
+    if(janusScreenShareStream) {
+      janusScreenShareStream.getTracks()[0].stop();
+      janusScreenShareStream = null;
+    }
+
+    tLogBox('janusRemoteStreamPeers : ', janusRemoteStreamPeers)
+    for (let key in janusRemoteStreamPeers) {
+      janusRemoteStreamPeers[key].close();
+      janusRemoteStreamPeers[key] = null;
+      tLogBox('deleted janusRemoteStreamPeers. ', key)
+      delete janusRemoteStreamPeers[key];
+    }
+  }
 
 });
