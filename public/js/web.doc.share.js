@@ -4,9 +4,10 @@ document.addEventListener('DOMContentLoaded', function() {
   const inputTarget = document.getElementById('inputTarget');
   const loginBtn = document.getElementById('loginBtn');
   const callBtn = document.getElementById('callBtn');
-  const stopShareBtn = document.getElementById('stopShareBtn');
   const localVideo = document.getElementById('localVideo');
   const remoteVideo = document.getElementById('remoteVideo');
+
+  const stopShareBtn = document.getElementById('stopShareBtn');
   const docShare = document.getElementById('docShare');
   const localDocList = document.getElementById('localDocList');
   const localDoc = document.getElementById('localDoc');

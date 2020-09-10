@@ -190,7 +190,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         };
 
                         try {
-                            tLogBox('send(offerdata)', sdpData);
+                            tLogBox('send', sdpData);
                             signalSocketIo.emit('knowledgetalk', sdpData);
                         } catch (err) {
                             if (err instanceof SyntaxError) {
